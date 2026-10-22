@@ -1,0 +1,15 @@
+{
+  "id": "session-1787041122770",
+  "startedAt": "2026-08-18T08:18:42.770Z",
+  "cwd": "/Users/aumpatel/Desktop/cld",
+  "context": {},
+  "metrics": {
+    "edits": 0,
+    "commands": 0,
+    "tasks": 0,
+    "errors": 0
+  },
+  "restoredAt": "2026-08-18T08:55:20.736Z",
+  "endedAt": "2026-08-18T08:58:49.298Z",
+  "duration": 2406529
+}

@@ -1,0 +1,2025 @@
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IUDWAS - Complete System Documentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1d1d1f;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 10.5pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: #111827;
+      font-weight: 700;
+      margin-top: 0;
+      letter-spacing: -0.02em;
+    }
+
+    h1 { font-size: 22pt; margin-bottom: 8pt; color: #004085; }
+    h2 { font-size: 15pt; margin-bottom: 8pt; border-bottom: 1.5pt solid #e5e7eb; padding-bottom: 4pt; color: #1e3a8a; margin-top: 14pt; }
+    h3 { font-size: 12pt; margin-bottom: 6pt; color: #1f2937; margin-top: 10pt; }
+    h4 { font-size: 10.5pt; margin-bottom: 4pt; color: #374151; }
+
+    p { margin-top: 0; margin-bottom: 6pt; color: #374151; text-align: justify; }
+
+    .page-break {
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* Cover Page */
+    .cover-page {
+      height: 98vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40pt 20pt 20pt 20pt;
+      border: 2pt solid #2563eb;
+      border-radius: 12pt;
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+      page-break-after: always;
+    }
+
+    .cover-header {
+      text-align: center;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      font-size: 9pt;
+      font-weight: 700;
+      padding: 4pt 12pt;
+      border-radius: 20pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16pt;
+    }
+
+    .cover-title {
+      font-size: 26pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.15;
+      margin-bottom: 10pt;
+    }
+
+    .cover-subtitle {
+      font-size: 13pt;
+      color: #475569;
+      font-weight: 500;
+      max-width: 500pt;
+      margin: 0 auto 20pt auto;
+    }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12pt;
+      margin: 20pt 0;
+    }
+
+    .cover-card {
+      background: white;
+      border: 1pt solid #cbd5e1;
+      border-radius: 8pt;
+      padding: 10pt 14pt;
+      box-shadow: 0 2pt 4pt rgba(0,0,0,0.03);
+    }
+
+    .cover-card-label {
+      font-size: 8pt;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 2pt;
+    }
+
+    .cover-card-value {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .cover-footer {
+      border-top: 1pt solid #cbd5e1;
+      padding-top: 12pt;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5pt;
+      color: #64748b;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6pt 0 12pt 0;
+      font-size: 8.5pt;
+    }
+
+    th, td {
+      border: 1pt solid #cbd5e1;
+      padding: 5pt 7pt;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 7.5pt;
+      letter-spacing: 0.04em;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .code-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5pt;
+      background: #e2e8f0;
+      padding: 1pt 3pt;
+      border-radius: 3pt;
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    .badge-pk {
+      background: #fee2e2;
+      color: #991b1b;
+      font-weight: 700;
+      padding: 1pt 4pt;
+      border-radius: 3pt;
+      font-size: 7pt;
+    }
+
+    .badge-fk {
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 700;
+      padding: 1pt 4pt;
+      border-radius: 3pt;
+      font-size: 7pt;
+    }
+
+    .badge-nn {
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 700;
+      padding: 1pt 4pt;
+      border-radius: 3pt;
+      font-size: 7pt;
+    }
+
+    .badge-uq {
+      background: #f3e8ff;
+      color: #6b21a8;
+      font-weight: 700;
+      padding: 1pt 4pt;
+      border-radius: 3pt;
+      font-size: 7pt;
+    }
+
+    /* Diagram Containers */
+    .diagram-box {
+      background: #ffffff;
+      border: 1pt solid #cbd5e1;
+      border-radius: 8pt;
+      padding: 10pt;
+      margin: 8pt 0 12pt 0;
+      text-align: center;
+      box-shadow: 0 1pt 3pt rgba(0,0,0,0.04);
+    }
+
+    .diagram-caption {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 6pt;
+      text-align: center;
+    }
+
+    /* Status cards & alerts */
+    .alert-box {
+      border-left: 3pt solid #2563eb;
+      background: #eff6ff;
+      padding: 6pt 10pt;
+      border-radius: 0 6pt 6pt 0;
+      margin: 6pt 0 10pt 0;
+      font-size: 9pt;
+    }
+
+    .alert-box strong {
+      color: #1e40af;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 2pt 6pt;
+      border-radius: 10pt;
+      font-size: 7.5pt;
+      font-weight: 700;
+    }
+    .status-green { background: #dcfce7; color: #166534; }
+    .status-blue { background: #dbeafe; color: #1e40af; }
+    .status-purple { background: #f3e8ff; color: #6b21a8; }
+  </style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div class="cover-header">
+      <div class="cover-badge">Enterprise University Software Architecture</div>
+      <div class="cover-title">IUDWAS Technical System Documentation</div>
+      <div class="cover-subtitle">Intelligent University Document & Workflow Automation System</div>
+      <p style="text-align: center; color: #64748b; font-size: 9.5pt;">Complete Architectural Design, UML Diagrams Suite & Comprehensive Relational Data Dictionary</p>
+    </div>
+
+    <div>
+      <div class="cover-grid">
+        <div class="cover-card">
+          <div class="cover-card-label">Document Version</div>
+          <div class="cover-card-value">1.0.0 (Production Master)</div>
+        </div>
+        <div class="cover-card">
+          <div class="cover-card-label">Security Clearance</div>
+          <div class="cover-card-value"><span class="status-pill status-green">GREEN FLAG VERIFIED</span></div>
+        </div>
+        <div class="cover-card">
+          <div class="cover-card-label">Backend Architecture</div>
+          <div class="cover-card-value">Node.js / Express / TypeScript / SQLite WAL</div>
+        </div>
+        <div class="cover-card">
+          <div class="cover-card-label">Frontend Architecture</div>
+          <div class="cover-card-value">React 18 / Vite / Tailwind / Apple Design</div>
+        </div>
+        <div class="cover-card">
+          <div class="cover-card-label">Database Schema Status</div>
+          <div class="cover-card-value">3NF Relational (15 Normalized Tables)</div>
+        </div>
+        <div class="cover-card">
+          <div class="cover-card-label">Automated Test Coverage</div>
+          <div class="cover-card-value">72 / 72 Automated Unit & Integration Tests (100%)</div>
+        </div>
+      </div>
+
+      <div class="alert-box">
+        <strong>Executive Summary:</strong> IUDWAS provides a secure, role-governed document management and multi-level approval workflow automation platform for higher education institutions. It combines strict Zod input validation, 5-tier rate limiting with per-account exponential backoff, deep binary magic-byte inspection, automated OCR extraction, and tamper-evident audit logging.
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <div><strong>Target System:</strong> IUDWAS University Management Portal</div>
+      <div><strong>Publication Date:</strong> August 2026</div>
+      <div><strong>Engineered by:</strong> Antigravity Autonomous Systems</div>
+    </div>
+  </div>
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="page-break">
+    <h2>Table of Contents</h2>
+    <table style="font-size: 9pt;">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Section</th>
+          <th style="width: 65%;">Title / Topic</th>
+          <th style="width: 20%; text-align: right;">Target Domain</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Section 1</strong></td>
+          <td><strong>Executive System Overview & Technical Architecture Foundation</strong><br><span style="color: #64748b; font-size: 8pt;">Core capabilities, technology stack breakdown, operational tiers, and security principles.</span></td>
+          <td style="text-align: right;"><span class="status-pill status-blue">Architecture</span></td>
+        </tr>
+        <tr>
+          <td><strong>Section 2</strong></td>
+          <td><strong>Comprehensive UML Diagrams Suite (Vector Models)</strong><br><span style="color: #64748b; font-size: 8pt;">Use Case, Domain Classes, Sequence Flows, State Machines, Component Deployment & ERD.</span></td>
+          <td style="text-align: right;"><span class="status-pill status-purple">UML Suite</span></td>
+        </tr>
+        <tr>
+          <td><strong>2.1</strong></td>
+          <td>• Actor & System Use Case Model</td>
+          <td style="text-align: right;">Use Cases</td>
+        </tr>
+        <tr>
+          <td><strong>2.2</strong></td>
+          <td>• Domain Class & Structural Relationship Model</td>
+          <td style="text-align: right;">Class Model</td>
+        </tr>
+        <tr>
+          <td><strong>2.3</strong></td>
+          <td>• Sequence Diagram: Document Upload, Magic-Byte Inspection & OCR Pipeline</td>
+          <td style="text-align: right;">Sequence Flow</td>
+        </tr>
+        <tr>
+          <td><strong>2.4</strong></td>
+          <td>• Sequence Diagram: Multi-Step Approval, Delegation & SLA Escalation Flow</td>
+          <td style="text-align: right;">Sequence Flow</td>
+        </tr>
+        <tr>
+          <td><strong>2.5</strong></td>
+          <td>• Sequence Diagram: Authentication, JWT Rotation & Exponential Backoff Shield</td>
+          <td style="text-align: right;">Security Flow</td>
+        </tr>
+        <tr>
+          <td><strong>2.6</strong></td>
+          <td>• State Machine: Document & Workflow Instance Lifecycle Transitions</td>
+          <td style="text-align: right;">State Machine</td>
+        </tr>
+        <tr>
+          <td><strong>2.7</strong></td>
+          <td>• Component & Deployment Physical Architecture</td>
+          <td style="text-align: right;">Deployment</td>
+        </tr>
+        <tr>
+          <td><strong>2.8</strong></td>
+          <td>• Entity-Relationship Diagram (ERD) with Relational Multiplicities</td>
+          <td style="text-align: right;">Database ERD</td>
+        </tr>
+        <tr>
+          <td><strong>Section 3</strong></td>
+          <td><strong>Complete Relational Data Dictionary (15 Tables)</strong><br><span style="color: #64748b; font-size: 8pt;">Exhaustive specifications for all columns, constraints, foreign keys, defaults, and semantics.</span></td>
+          <td style="text-align: right;"><span class="status-pill status-green">Data Dictionary</span></td>
+        </tr>
+        <tr>
+          <td><strong>Section 4</strong></td>
+          <td><strong>Security, Validation & Rate Limiting Enforcement</strong><br><span style="color: #64748b; font-size: 8pt;">Tiered DDoS protection, Zod schema validation, magic bytes inspection, and error sanitization.</span></td>
+          <td style="text-align: right;"><span class="status-pill status-blue">Security</span></td>
+        </tr>
+        <tr>
+          <td><strong>Section 5</strong></td>
+          <td><strong>REST API Endpoint Catalog & Route Specifications</strong><br><span style="color: #64748b; font-size: 8pt;">Endpoint methods, URL routes, RBAC matrix, request parameters, and response schemas.</span></td>
+          <td style="text-align: right;"><span class="status-pill status-purple">API Catalog</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 1: SYSTEM OVERVIEW -->
+  <div class="page-break">
+    <h2>1. Executive System Overview & Architecture Foundation</h2>
+    <p>
+      The <strong>Intelligent University Document & Workflow Automation System (IUDWAS)</strong> is a state-of-the-art academic document lifecycle management and multi-level approval orchestration platform engineered for universities and educational institutions.
+    </p>
+
+    <h3>1.1 Technology Stack Breakdown</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">Layer / Subsystem</th>
+          <th style="width: 35%;">Core Technologies</th>
+          <th style="width: 40%;">Architectural Responsibilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Client Application (SPA)</strong></td>
+          <td>React 18.3, Vite 6.4.3, TypeScript 5.7, Tailwind CSS 3.4, Lucide Icons, Canvas Confetti</td>
+          <td>Apple Design System UI, responsive glassmorphism aesthetic, JWT session management, document previews, workflow trackers, real-time analytics dashboards.</td>
+        </tr>
+        <tr>
+          <td><strong>API Gateway & Core Server</strong></td>
+          <td>Node.js 24 LTS, Express 4.21, TypeScript 5.7</td>
+          <td>RESTful API routing, centralized JWT authentication, role-based access control (RBAC), multi-tier sliding-window rate limiters, error sanitization.</td>
+        </tr>
+        <tr>
+          <td><strong>Persistence & Caching</strong></td>
+          <td>Better-SQLite3 11.8 (WAL Mode), In-Memory Backoff Cache</td>
+          <td>ACID transactional persistence, foreign key cascading, atomic multi-step workflow transactions, sub-millisecond query execution, zero external daemon overhead.</td>
+        </tr>
+        <tr>
+          <td><strong>Document Storage & Ingestion</strong></td>
+          <td>Multer, FS Stream Pipelines, Binary Magic-Byte Engine</td>
+          <td>Isolated disk storage outside web root, cryptographically random UUID naming, deep header inspection (%PDF-, PNG, JPEG, PK..), sandboxed download headers.</td>
+        </tr>
+        <tr>
+          <td><strong>Intelligence & OCR Subsystem</strong></td>
+          <td>Tesseract OCR Bridge, Simulated NLP Classifier & Search</td>
+          <td>Full-text document indexing, automated category detection, contextual summaries, semantic search queries, interactive assistant chatbot.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>1.2 Core Role-Based Access Control (RBAC) Hierarchy</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 20%;">User Role</th>
+          <th style="width: 35%;">Permitted Actions</th>
+          <th style="width: 45%;">Operational Scope & Security Boundary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="status-pill status-purple">SUPER_ADMIN</span></td>
+          <td>Full system control, User management, Department configuration, Workflow template authoring, Global Audit log lookup, System settings modification.</td>
+          <td>Global University-wide scope across all academic and administrative departments.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">DEPT_ADMIN</span></td>
+          <td>Manage department faculty & students, create departmental workflows, review & approve departmental workflow steps, manage department document repository.</td>
+          <td>Department-scoped isolation (restricted strictly to their assigned academic department).</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-green">FACULTY</span></td>
+          <td>Upload documents, create tags, submit workflow instances, approve/reject assigned review steps, delegate approvals, search departmental records.</td>
+          <td>Department and individual scope. Can view public and departmental documents.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">STUDENT</span></td>
+          <td>Upload personal student documents (transcripts, petitions), submit workflow approval requests, track real-time workflow status, download owned files.</td>
+          <td>Strict Individual Owner Scope (IDOR protected; forbidden from viewing other students' confidential files).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 2: UML DIAGRAMS -->
+  <div class="page-break">
+    <h2>2. Comprehensive UML Diagrams Suite</h2>
+    <p>This section provides formal UML diagrams modeling the functional use cases, structural domain entities, dynamic sequence interactions, lifecycle state transitions, component deployment, and relational data architecture.</p>
+
+    <!-- 2.1 USE CASE DIAGRAM -->
+    <div class="diagram-box avoid-break">
+      <h3>2.1 Use Case Model</h3>
+      <svg viewBox="0 0 780 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="480" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+        
+        <!-- System Boundary -->
+        <rect x="200" y="20" width="400" height="440" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" stroke-dasharray="4,4"/>
+        <text x="400" y="42" font-family="Inter" font-size="12" font-weight="700" fill="#1e40af" text-anchor="middle">IUDWAS Application Boundary</text>
+
+        <!-- Actors -->
+        <!-- Super Admin -->
+        <circle cx="90" cy="80" r="16" fill="#e0e7ff" stroke="#4338ca" stroke-width="2"/>
+        <line x1="90" y1="96" x2="90" y2="125" stroke="#4338ca" stroke-width="2"/>
+        <line x1="70" y1="108" x2="110" y2="108" stroke="#4338ca" stroke-width="2"/>
+        <line x1="90" y1="125" x2="75" y2="150" stroke="#4338ca" stroke-width="2"/>
+        <line x1="90" y1="125" x2="105" y2="150" stroke="#4338ca" stroke-width="2"/>
+        <text x="90" y="168" font-family="Inter" font-size="10" font-weight="700" fill="#1e1b4b" text-anchor="middle">Super Admin</text>
+
+        <!-- Dept Admin -->
+        <circle cx="90" cy="240" r="16" fill="#f3e8ff" stroke="#7e22ce" stroke-width="2"/>
+        <line x1="90" y1="256" x2="90" y2="285" stroke="#7e22ce" stroke-width="2"/>
+        <line x1="70" y1="268" x2="110" y2="268" stroke="#7e22ce" stroke-width="2"/>
+        <line x1="90" y1="285" x2="75" y2="310" stroke="#7e22ce" stroke-width="2"/>
+        <line x1="90" y1="285" x2="105" y2="310" stroke="#7e22ce" stroke-width="2"/>
+        <text x="90" y="328" font-family="Inter" font-size="10" font-weight="700" fill="#581c87" text-anchor="middle">Dept Admin</text>
+
+        <!-- Faculty -->
+        <circle cx="690" cy="140" r="16" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+        <line x1="690" y1="156" x2="690" y2="185" stroke="#1d4ed8" stroke-width="2"/>
+        <line x1="670" y1="168" x2="710" y2="168" stroke="#1d4ed8" stroke-width="2"/>
+        <line x1="690" y1="185" x2="675" y2="210" stroke="#1d4ed8" stroke-width="2"/>
+        <line x1="690" y1="185" x2="705" y2="210" stroke="#1d4ed8" stroke-width="2"/>
+        <text x="690" y="228" font-family="Inter" font-size="10" font-weight="700" fill="#1e3a8a" text-anchor="middle">Faculty</text>
+
+        <!-- Student -->
+        <circle cx="690" cy="320" r="16" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <line x1="690" y1="336" x2="690" y2="365" stroke="#15803d" stroke-width="2"/>
+        <line x1="670" y1="348" x2="710" y2="348" stroke="#15803d" stroke-width="2"/>
+        <line x1="690" y1="365" x2="675" y2="390" stroke="#15803d" stroke-width="2"/>
+        <line x1="690" y1="365" x2="705" y2="390" stroke="#15803d" stroke-width="2"/>
+        <text x="690" y="408" font-family="Inter" font-size="10" font-weight="700" fill="#14532d" text-anchor="middle">Student</text>
+
+        <!-- Use Cases (Ovals) -->
+        <!-- UC1: Manage Users & Depts -->
+        <ellipse cx="320" cy="80" rx="90" ry="20" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="320" y="84" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Manage Users & Depts</text>
+
+        <!-- UC2: Configure System & SLA -->
+        <ellipse cx="480" cy="80" rx="90" ry="20" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="480" y="84" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Configure SLA & Settings</text>
+
+        <!-- UC3: Author Workflows -->
+        <ellipse cx="320" cy="150" rx="90" ry="20" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="320" y="154" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Author Workflow Templates</text>
+
+        <!-- UC4: Document Upload & OCR -->
+        <ellipse cx="400" cy="220" rx="95" ry="22" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="400" y="224" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Upload Document & OCR Extract</text>
+
+        <!-- UC5: Start Workflow Instance -->
+        <ellipse cx="480" cy="290" rx="90" ry="20" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="480" y="294" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Initiate Workflow Instance</text>
+
+        <!-- UC6: Multi-step Approve / Reject -->
+        <ellipse cx="320" cy="360" rx="95" ry="22" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="320" y="364" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Approve / Reject / Delegate Step</text>
+
+        <!-- UC7: Security Audit & Search -->
+        <ellipse cx="480" cy="420" rx="90" ry="20" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="480" y="424" font-family="Inter" font-size="9" font-weight="600" fill="#1e40af" text-anchor="middle">Audit Logs & Semantic Search</text>
+
+        <!-- Lines connecting Actors to Use Cases -->
+        <!-- Super Admin to UC1, UC2, UC7 -->
+        <line x1="120" y1="90" x2="230" y2="80" stroke="#475569" stroke-width="1.2"/>
+        <line x1="120" y1="95" x2="390" y2="80" stroke="#475569" stroke-width="1.2"/>
+        <line x1="120" y1="105" x2="395" y2="420" stroke="#475569" stroke-width="1.2"/>
+
+        <!-- Dept Admin to UC3, UC4, UC6 -->
+        <line x1="120" y1="260" x2="230" y2="155" stroke="#475569" stroke-width="1.2"/>
+        <line x1="120" y1="270" x2="305" y2="225" stroke="#475569" stroke-width="1.2"/>
+        <line x1="120" y1="280" x2="225" y2="360" stroke="#475569" stroke-width="1.2"/>
+
+        <!-- Faculty to UC4, UC5, UC6 -->
+        <line x1="660" y1="160" x2="495" y2="220" stroke="#475569" stroke-width="1.2"/>
+        <line x1="660" y1="170" x2="570" y2="290" stroke="#475569" stroke-width="1.2"/>
+        <line x1="660" y1="180" x2="415" y2="360" stroke="#475569" stroke-width="1.2"/>
+
+        <!-- Student to UC4, UC5 -->
+        <line x1="660" y1="340" x2="495" y2="230" stroke="#475569" stroke-width="1.2"/>
+        <line x1="660" y1="350" x2="570" y2="300" stroke="#475569" stroke-width="1.2"/>
+      </svg>
+      <div class="diagram-caption">Figure 2.1: IUDWAS Role-Based Actor Use Case Diagram</div>
+    </div>
+
+    <!-- 2.2 DOMAIN CLASS DIAGRAM -->
+    <div class="diagram-box avoid-break">
+      <h3>2.2 Domain Class Model</h3>
+      <svg viewBox="0 0 780 480" width="100%" height="340" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="480" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Class: User -->
+        <g transform="translate(40, 30)">
+          <rect width="180" height="150" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h180 v26 h-180 z" fill="#dbeafe"/>
+          <text x="90" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">User</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- userId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- email: String [UQ]</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- role: UserRole</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- departmentId: UUID [FK]</text>
+          <text x="10" y="98" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- isActive: Boolean</text>
+          <line x1="0" y1="108" x2="180" y2="108" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="122" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ authenticate(pwd)</text>
+          <text x="10" y="136" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ checkPermission(role)</text>
+        </g>
+
+        <!-- Class: Department -->
+        <g transform="translate(290, 30)">
+          <rect width="180" height="130" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h180 v26 h-180 z" fill="#dbeafe"/>
+          <text x="90" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">Department</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- departmentId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- name: String [UQ]</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- code: String [UQ]</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- headUserId: UUID [FK]</text>
+          <line x1="0" y1="94" x2="180" y2="94" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="108" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ getFacultyList()</text>
+          <text x="10" y="120" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ getWorkflows()</text>
+        </g>
+
+        <!-- Class: Document -->
+        <g transform="translate(540, 30)">
+          <rect width="195" height="170" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h195 v26 h-195 z" fill="#dbeafe"/>
+          <text x="97" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">Document</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- documentId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- title: String</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- filePath: String</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- fileType: DocumentType</text>
+          <text x="10" y="98" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- isConfidential: Boolean</text>
+          <text x="10" y="112" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- status: DocumentStatus</text>
+          <line x1="0" y1="122" x2="195" y2="122" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="136" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ uploadNewVersion()</text>
+          <text x="10" y="148" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ extractOcrText()</text>
+          <text x="10" y="160" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ verifyMagicBytes()</text>
+        </g>
+
+        <!-- Class: Workflow -->
+        <g transform="translate(40, 270)">
+          <rect width="180" height="150" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h180 v26 h-180 z" fill="#ede9fe"/>
+          <text x="90" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#5b21b6" text-anchor="middle">Workflow (Template)</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- workflowId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- name: String</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- maxDaysSla: Integer</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- autoEscalate: Boolean</text>
+          <line x1="0" y1="94" x2="180" y2="94" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="108" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ addStep(order, role)</text>
+          <text x="10" y="122" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ duplicate()</text>
+        </g>
+
+        <!-- Class: WorkflowStep -->
+        <g transform="translate(290, 270)">
+          <rect width="180" height="150" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h180 v26 h-180 z" fill="#ede9fe"/>
+          <text x="90" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#5b21b6" text-anchor="middle">WorkflowStep</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- stepId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- workflowId: UUID [FK]</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- stepOrder: Integer</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- approverRole: UserRole</text>
+          <text x="10" y="98" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- slaHours: Integer</text>
+          <line x1="0" y1="108" x2="180" y2="108" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="122" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ notifyApprovers()</text>
+        </g>
+
+        <!-- Class: WorkflowInstance -->
+        <g transform="translate(540, 270)">
+          <rect width="195" height="170" fill="#ffffff" stroke="#059669" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h195 v26 h-195 z" fill="#d1fae5"/>
+          <text x="97" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#065f46" text-anchor="middle">WorkflowInstance</text>
+          <text x="10" y="42" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- instanceId: UUID [PK]</text>
+          <text x="10" y="56" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- documentId: UUID [FK]</text>
+          <text x="10" y="70" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- currentStepId: UUID [FK]</text>
+          <text x="10" y="84" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- status: InstanceStatus</text>
+          <text x="10" y="98" font-family="JetBrains Mono" font-size="7.5" fill="#334155">- submittedBy: UUID [FK]</text>
+          <line x1="0" y1="108" x2="195" y2="108" stroke="#e2e8f0" stroke-width="1"/>
+          <text x="10" y="122" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ approve(actorId, comment)</text>
+          <text x="10" y="136" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ reject(actorId, comment)</text>
+          <text x="10" y="150" font-family="JetBrains Mono" font-size="7.5" fill="#059669">+ delegate(targetUser)</text>
+        </g>
+
+        <!-- Association Lines -->
+        <!-- User to Department (1..* to 1) -->
+        <line x1="220" y1="80" x2="290" y2="80" stroke="#475569" stroke-width="1.5"/>
+        <text x="230" y="74" font-family="Inter" font-size="8" fill="#475569">*</text>
+        <text x="278" y="74" font-family="Inter" font-size="8" fill="#475569">1</text>
+
+        <!-- User to Document (1 to *) -->
+        <line x1="220" y1="120" x2="540" y2="120" stroke="#475569" stroke-width="1.5"/>
+        <text x="230" y="114" font-family="Inter" font-size="8" fill="#475569">1</text>
+        <text x="525" y="114" font-family="Inter" font-size="8" fill="#475569">*</text>
+
+        <!-- Workflow to WorkflowStep (1 to 1..*) Composition -->
+        <line x1="220" y1="340" x2="290" y2="340" stroke="#7c3aed" stroke-width="1.5"/>
+        <polygon points="220,340 228,335 236,340 228,345" fill="#7c3aed"/>
+        <text x="245" y="334" font-family="Inter" font-size="8" fill="#7c3aed">1</text>
+        <text x="275" y="334" font-family="Inter" font-size="8" fill="#7c3aed">1..*</text>
+
+        <!-- Workflow to WorkflowInstance (1 to *) -->
+        <line x1="470" y1="340" x2="540" y2="340" stroke="#059669" stroke-width="1.5"/>
+        <text x="480" y="334" font-family="Inter" font-size="8" fill="#059669">1</text>
+        <text x="525" y="334" font-family="Inter" font-size="8" fill="#059669">*</text>
+
+        <!-- Document to WorkflowInstance (1 to *) -->
+        <line x1="637" y1="200" x2="637" y2="270" stroke="#059669" stroke-width="1.5"/>
+        <text x="642" y="215" font-family="Inter" font-size="8" fill="#059669">1</text>
+        <text x="642" y="260" font-family="Inter" font-size="8" fill="#059669">*</text>
+      </svg>
+      <div class="diagram-caption">Figure 2.2: IUDWAS Structural Domain Class Diagram & Multiplicities</div>
+    </div>
+  </div>
+
+  <!-- SEQUENCE DIAGRAMS -->
+  <div class="page-break">
+    <!-- 2.3 SEQUENCE: DOCUMENT UPLOAD & OCR -->
+    <div class="diagram-box avoid-break">
+      <h3>2.3 Sequence Diagram: Secure Document Upload & OCR Ingestion</h3>
+      <svg viewBox="0 0 780 430" width="100%" height="320" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="430" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Lifeline Headers -->
+        <g transform="translate(40, 20)">
+          <rect width="100" height="30" fill="#dbeafe" stroke="#2563eb" rx="4"/>
+          <text x="50" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#1e40af" text-anchor="middle">:Client (SPA)</text>
+          <line x1="50" y1="30" x2="50" y2="390" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(190, 20)">
+          <rect width="120" height="30" fill="#e0e7ff" stroke="#4338ca" rx="4"/>
+          <text x="60" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#3730a3" text-anchor="middle">:Security Middleware</text>
+          <line x1="60" y1="30" x2="60" y2="390" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(360, 20)">
+          <rect width="120" height="30" fill="#fce7f3" stroke="#be185d" rx="4"/>
+          <text x="60" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#9d174d" text-anchor="middle">:Upload Validator</text>
+          <line x1="60" y1="30" x2="60" y2="390" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(520, 20)">
+          <rect width="110" height="30" fill="#dcfce7" stroke="#15803d" rx="4"/>
+          <text x="55" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#166534" text-anchor="middle">:DocsController</text>
+          <line x1="55" y1="30" x2="55" y2="390" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(660, 20)">
+          <rect width="90" height="30" fill="#fef3c7" stroke="#b45309" rx="4"/>
+          <text x="45" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#92400e" text-anchor="middle">:SQLite WAL</text>
+          <line x1="45" y1="30" x2="45" y2="390" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <!-- Messages -->
+        <!-- 1. POST Multipart -->
+        <line x1="90" y1="80" x2="250" y2="80" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="170" y="74" font-family="Inter" font-size="8" font-weight="600" fill="#1e40af" text-anchor="middle">1: POST /documents/upload (JWT + File)</text>
+
+        <!-- 2. Rate Limiting Check -->
+        <rect x="245" y="85" width="10" height="35" fill="#c7d2fe"/>
+        <line x1="255" y1="95" x2="295" y2="95" stroke="#4338ca" stroke-width="1.2"/>
+        <line x1="295" y1="95" x2="295" y2="110" stroke="#4338ca" stroke-width="1.2"/>
+        <line x1="295" y1="110" x2="255" y2="110" stroke="#4338ca" stroke-width="1.2"/>
+        <text x="300" y="105" font-family="Inter" font-size="7.5" fill="#4338ca">Check uploadLimiter quota</text>
+
+        <!-- 3. Multer Disk & Magic Bytes -->
+        <line x1="250" y1="135" x2="420" y2="135" stroke="#be185d" stroke-width="1.5"/>
+        <text x="335" y="129" font-family="Inter" font-size="8" font-weight="600" fill="#be185d" text-anchor="middle">2: Save disk & inspect magic bytes</text>
+
+        <!-- 4. Validate Magic Bytes -->
+        <rect x="415" y="140" width="10" height="40" fill="#fbcfe8"/>
+        <line x1="425" y1="150" x2="465" y2="150" stroke="#be185d" stroke-width="1.2"/>
+        <line x1="465" y1="150" x2="465" y2="165" stroke="#be185d" stroke-width="1.2"/>
+        <line x1="465" y1="165" x2="425" y2="165" stroke="#be185d" stroke-width="1.2"/>
+        <text x="470" y="160" font-family="Inter" font-size="7.5" fill="#be185d">Verify header (%PDF-, PNG, PK..)</text>
+
+        <!-- 5. Forward to Controller -->
+        <line x1="420" y1="195" x2="575" y2="195" stroke="#15803d" stroke-width="1.5"/>
+        <text x="495" y="189" font-family="Inter" font-size="8" font-weight="600" fill="#15803d" text-anchor="middle">3: Forward validated payload</text>
+
+        <!-- 6. OCR Text Extraction -->
+        <rect x="570" y="200" width="10" height="60" fill="#bbf7d0"/>
+        <line x1="580" y1="215" x2="620" y2="215" stroke="#15803d" stroke-width="1.2"/>
+        <line x1="620" y1="215" x2="620" y2="230" stroke="#15803d" stroke-width="1.2"/>
+        <line x1="620" y1="230" x2="580" y2="230" stroke="#15803d" stroke-width="1.2"/>
+        <text x="625" y="225" font-family="Inter" font-size="7.5" fill="#15803d">Extract OCR full text & metadata</text>
+
+        <!-- 7. DB Atomic Transaction -->
+        <line x1="580" y1="270" x2="705" y2="270" stroke="#b45309" stroke-width="1.5"/>
+        <text x="645" y="264" font-family="Inter" font-size="8" font-weight="600" fill="#b45309" text-anchor="middle">4: db.transaction(Insert Doc + Version 1 + Tags + Audit)</text>
+
+        <!-- 8. DB Commit OK -->
+        <line x1="705" y1="300" x2="580" y2="300" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="645" y="294" font-family="Inter" font-size="8" fill="#b45309" text-anchor="middle">5: Transaction Committed</text>
+
+        <!-- 9. Return 201 Created -->
+        <line x1="570" y1="340" x2="90" y2="340" stroke="#059669" stroke-width="2"/>
+        <text x="330" y="334" font-family="Inter" font-size="8.5" font-weight="700" fill="#059669" text-anchor="middle">6: HTTP 201 Created { success: true, data: DocumentRecord }</text>
+      </svg>
+      <div class="diagram-caption">Figure 2.3: Sequence Diagram for Multi-Tier Document Upload, Magic-Byte Inspection & OCR Processing</div>
+    </div>
+
+    <!-- 2.4 SEQUENCE: WORKFLOW APPROVAL & DELEGATION -->
+    <div class="diagram-box avoid-break">
+      <h3>2.4 Sequence Diagram: Multi-Step Approval & Delegation Flow</h3>
+      <svg viewBox="0 0 780 410" width="100%" height="300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="410" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Lifelines -->
+        <g transform="translate(30, 20)">
+          <rect width="90" height="30" fill="#dbeafe" stroke="#2563eb" rx="4"/>
+          <text x="45" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#1e40af" text-anchor="middle">:Submitter</text>
+          <line x1="45" y1="30" x2="45" y2="380" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(170, 20)">
+          <rect width="130" height="30" fill="#ede9fe" stroke="#7c3aed" rx="4"/>
+          <text x="65" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#5b21b6" text-anchor="middle">:WorkflowEngine</text>
+          <line x1="65" y1="30" x2="65" y2="380" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(360, 20)">
+          <rect width="100" height="30" fill="#fef3c7" stroke="#b45309" rx="4"/>
+          <text x="50" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#92400e" text-anchor="middle">:DeptAdmin</text>
+          <line x1="50" y1="30" x2="50" y2="380" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(520, 20)">
+          <rect width="100" height="30" fill="#fce7f3" stroke="#be185d" rx="4"/>
+          <text x="50" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#9d174d" text-anchor="middle">:SuperAdmin</text>
+          <line x1="50" y1="30" x2="50" y2="380" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <g transform="translate(670, 20)">
+          <rect width="90" height="30" fill="#dcfce7" stroke="#15803d" rx="4"/>
+          <text x="45" y="20" font-family="Inter" font-size="9" font-weight="700" fill="#166534" text-anchor="middle">:Notification</text>
+          <line x1="45" y1="30" x2="45" y2="380" stroke="#94a3b8" stroke-dasharray="4,4"/>
+        </g>
+
+        <!-- Sequence -->
+        <!-- 1. Start Instance -->
+        <line x1="75" y1="75" x2="235" y2="75" stroke="#2563eb" stroke-width="1.5"/>
+        <text x="155" y="69" font-family="Inter" font-size="8" font-weight="600" fill="#1e40af" text-anchor="middle">1: startWorkflow(wfId, docId)</text>
+
+        <!-- 2. Set Step 1 & Notify DeptAdmin -->
+        <line x1="235" y1="105" x2="715" y2="105" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="475" y="99" font-family="Inter" font-size="8" fill="#5b21b6" text-anchor="middle">2: emitNotification(Step 1 Pending Approval to DeptAdmin)</text>
+
+        <!-- 3. DeptAdmin Approves Step 1 -->
+        <line x1="410" y1="150" x2="235" y2="150" stroke="#b45309" stroke-width="1.5"/>
+        <text x="320" y="144" font-family="Inter" font-size="8" font-weight="600" fill="#b45309" text-anchor="middle">3: approveStep(instanceId, comments)</text>
+
+        <!-- 4. Log Step 1 & Advance to Step 2 -->
+        <rect x="230" y="160" width="10" height="50" fill="#ddd6fe"/>
+        <text x="245" y="175" font-family="Inter" font-size="7.5" fill="#5b21b6">Record Log: ACTION=APPROVE</text>
+        <text x="245" y="190" font-family="Inter" font-size="7.5" fill="#5b21b6">Advance current_step_id -> Step 2</text>
+
+        <!-- 5. Notify SuperAdmin -->
+        <line x1="235" y1="220" x2="715" y2="220" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="475" y="214" font-family="Inter" font-size="8" fill="#5b21b6" text-anchor="middle">4: emitNotification(Step 2 Pending Approval to SuperAdmin)</text>
+
+        <!-- 6. SuperAdmin Approves Final Step -->
+        <line x1="570" y1="260" x2="235" y2="260" stroke="#be185d" stroke-width="1.5"/>
+        <text x="400" y="254" font-family="Inter" font-size="8" font-weight="600" fill="#be185d" text-anchor="middle">5: approveStep(instanceId, comments)</text>
+
+        <!-- 7. Finalize & Lock Status -->
+        <rect x="230" y="270" width="10" height="35" fill="#ddd6fe"/>
+        <text x="245" y="285" font-family="Inter" font-size="7.5" fill="#5b21b6">Set status = 'approved', completed_at = now()</text>
+
+        <!-- 8. Notify Submitter of Final Approval -->
+        <line x1="235" y1="320" x2="75" y2="320" stroke="#059669" stroke-width="2"/>
+        <text x="155" y="314" font-family="Inter" font-size="8.5" font-weight="700" fill="#059669" text-anchor="middle">6: notify Submitter: Workflow Fully Approved!</text>
+      </svg>
+      <div class="diagram-caption">Figure 2.4: Sequence Diagram for Multi-Step Approval & Automatic Notification Flow</div>
+    </div>
+  </div>
+
+  <!-- STATE MACHINE & DEPLOYMENT -->
+  <div class="page-break">
+    <!-- 2.6 STATE MACHINE DIAGRAM -->
+    <div class="diagram-box avoid-break">
+      <h3>2.5 State Machine Diagram: Workflow & Document Lifecycle</h3>
+      <svg viewBox="0 0 780 340" width="100%" height="260" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="340" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Start State -->
+        <circle cx="60" cy="100" r="14" fill="#0f172a"/>
+        <text x="60" y="130" font-family="Inter" font-size="8.5" font-weight="700" fill="#475569" text-anchor="middle">Initial</text>
+
+        <!-- State: Draft / Uploaded -->
+        <g transform="translate(130, 75)">
+          <rect width="110" height="50" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+          <text x="55" y="24" font-family="Inter" font-size="9" font-weight="700" fill="#0369a1" text-anchor="middle">DRAFT /</text>
+          <text x="55" y="38" font-family="Inter" font-size="9" font-weight="700" fill="#0369a1" text-anchor="middle">ACTIVE DOC</text>
+        </g>
+
+        <!-- State: In Progress -->
+        <g transform="translate(300, 75)">
+          <rect width="120" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="60" y="24" font-family="Inter" font-size="9" font-weight="700" fill="#5b21b6" text-anchor="middle">IN_PROGRESS</text>
+          <text x="60" y="38" font-family="Inter" font-size="8" fill="#6d28d9" text-anchor="middle">(Step 1..N-1)</text>
+        </g>
+
+        <!-- State: Delegated -->
+        <g transform="translate(300, 220)">
+          <rect width="120" height="50" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+          <text x="60" y="24" font-family="Inter" font-size="9" font-weight="700" fill="#b45309" text-anchor="middle">DELEGATED</text>
+          <text x="60" y="38" font-family="Inter" font-size="8" fill="#b45309" text-anchor="middle">Reassigned Step</text>
+        </g>
+
+        <!-- State: Approved -->
+        <g transform="translate(500, 75)">
+          <rect width="110" height="50" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+          <text x="55" y="30" font-family="Inter" font-size="9.5" font-weight="700" fill="#15803d" text-anchor="middle">APPROVED</text>
+        </g>
+
+        <!-- State: Rejected -->
+        <g transform="translate(500, 220)">
+          <rect width="110" height="50" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+          <text x="55" y="30" font-family="Inter" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">REJECTED</text>
+        </g>
+
+        <!-- Final State -->
+        <g transform="translate(680, 150)">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="#0f172a" stroke-width="2"/>
+          <circle cx="20" cy="20" r="10" fill="#0f172a"/>
+          <text x="20" y="50" font-family="Inter" font-size="8.5" font-weight="700" fill="#475569" text-anchor="middle">Closed / Locked</text>
+        </g>
+
+        <!-- Transitions -->
+        <line x1="74" y1="100" x2="130" y2="100" stroke="#475569" stroke-width="1.5"/>
+        <text x="100" y="92" font-family="Inter" font-size="7.5" fill="#475569">upload()</text>
+
+        <line x1="240" y1="100" x2="300" y2="100" stroke="#475569" stroke-width="1.5"/>
+        <text x="270" y="92" font-family="Inter" font-size="7.5" fill="#475569">submit()</text>
+
+        <line x1="360" y1="125" x2="360" y2="220" stroke="#d97706" stroke-width="1.5"/>
+        <text x="365" y="175" font-family="Inter" font-size="7.5" fill="#d97706">delegate()</text>
+
+        <line x1="300" y1="245" x2="280" y2="245" stroke="#d97706" stroke-width="1.5"/>
+        <path d="M280,245 C250,245 250,110 300,110" fill="none" stroke="#d97706" stroke-width="1.5"/>
+
+        <line x1="420" y1="100" x2="500" y2="100" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="460" y="92" font-family="Inter" font-size="7.5" fill="#16a34a">finalApprove()</text>
+
+        <line x1="380" y1="125" x2="500" y2="230" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="440" y="195" font-family="Inter" font-size="7.5" fill="#dc2626">reject()</text>
+
+        <line x1="610" y1="100" x2="680" y2="160" stroke="#16a34a" stroke-width="1.5"/>
+        <line x1="610" y1="245" x2="680" y2="180" stroke="#dc2626" stroke-width="1.5"/>
+      </svg>
+      <div class="diagram-caption">Figure 2.5: State Transition Diagram for Workflow Approval & Document Lifecycle</div>
+    </div>
+
+    <!-- 2.7 COMPONENT & DEPLOYMENT ARCHITECTURE -->
+    <div class="diagram-box avoid-break">
+      <h3>2.6 Component & Deployment Architecture</h3>
+      <svg viewBox="0 0 780 340" width="100%" height="260" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="340" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Tier 1: Client -->
+        <g transform="translate(30, 40)">
+          <rect width="180" height="260" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/>
+          <path d="M0,0 h180 v26 h-180 z" fill="#dbeafe"/>
+          <text x="90" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">Frontend Presentation Tier</text>
+          
+          <rect x="15" y="40" width="150" height="35" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="90" y="62" font-family="Inter" font-size="8" font-weight="600" fill="#1e293b" text-anchor="middle">React 18 SPA (Vite 6)</text>
+
+          <rect x="15" y="85" width="150" height="35" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="90" y="107" font-family="Inter" font-size="8" font-weight="600" fill="#1e293b" text-anchor="middle">Apple Design System (Tailwind)</text>
+
+          <rect x="15" y="130" width="150" height="35" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="90" y="152" font-family="Inter" font-size="8" font-weight="600" fill="#1e293b" text-anchor="middle">JWT Context & Interceptors</text>
+
+          <rect x="15" y="175" width="150" height="35" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="90" y="197" font-family="Inter" font-size="8" font-weight="600" fill="#1e293b" text-anchor="middle">Document Preview & OCR UI</text>
+
+          <rect x="15" y="220" width="150" height="30" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+          <text x="90" y="240" font-family="Inter" font-size="8" font-weight="600" fill="#1e293b" text-anchor="middle">Confetti & Toast Feedback</text>
+        </g>
+
+        <!-- Tier 2: Backend Gateway & Engine -->
+        <g transform="translate(280, 40)">
+          <rect width="250" height="260" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5"/>
+          <path d="M0,0 h250 v26 h-250 z" fill="#ede9fe"/>
+          <text x="125" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#5b21b6" text-anchor="middle">Backend Core Service Tier (Express/TS)</text>
+
+          <!-- Middlewares -->
+          <rect x="15" y="36" width="220" height="40" rx="4" fill="#f5f3ff" stroke="#c4b5fd"/>
+          <text x="125" y="52" font-family="Inter" font-size="8" font-weight="700" fill="#6d28d9" text-anchor="middle">Security & Rate Limit Shield</text>
+          <text x="125" y="66" font-family="Inter" font-size="7" fill="#6d28d9" text-anchor="middle">Helmet | CORS | 5-Tier IP & Backoff Limiters</text>
+
+          <rect x="15" y="82" width="220" height="35" rx="4" fill="#f5f3ff" stroke="#c4b5fd"/>
+          <text x="125" y="98" font-family="Inter" font-size="8" font-weight="700" fill="#6d28d9" text-anchor="middle">Zod Strict Input Validator</text>
+          <text x="125" y="110" font-family="Inter" font-size="7" fill="#6d28d9" text-anchor="middle">Strict Body, Params & Query Verification</text>
+
+          <rect x="15" y="124" width="220" height="40" rx="4" fill="#f5f3ff" stroke="#c4b5fd"/>
+          <text x="125" y="140" font-family="Inter" font-size="8" font-weight="700" fill="#6d28d9" text-anchor="middle">Controllers & Business Services</text>
+          <text x="125" y="154" font-family="Inter" font-size="7" fill="#6d28d9" text-anchor="middle">Auth | Documents | Workflows | Users | Audit</text>
+
+          <rect x="15" y="170" width="220" height="35" rx="4" fill="#f5f3ff" stroke="#c4b5fd"/>
+          <text x="125" y="186" font-family="Inter" font-size="8" font-weight="700" fill="#6d28d9" text-anchor="middle">Magic-Byte File Inspector</text>
+          <text x="125" y="198" font-family="Inter" font-size="7" fill="#6d28d9" text-anchor="middle">Header Signature & Sandbox Isolation</text>
+
+          <rect x="15" y="212" width="220" height="35" rx="4" fill="#f5f3ff" stroke="#c4b5fd"/>
+          <text x="125" y="228" font-family="Inter" font-size="8" font-weight="700" fill="#6d28d9" text-anchor="middle">AI / OCR Inference Engine</text>
+          <text x="125" y="240" font-family="Inter" font-size="7" fill="#6d28d9" text-anchor="middle">Text Extraction | Semantic Classifier | Chatbot</text>
+        </g>
+
+        <!-- Tier 3: Persistence & Storage -->
+        <g transform="translate(590, 40)">
+          <rect width="160" height="260" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5"/>
+          <path d="M0,0 h160 v26 h-160 z" fill="#d1fae5"/>
+          <text x="80" y="18" font-family="Inter" font-size="10" font-weight="700" fill="#065f46" text-anchor="middle">Persistence Tier</text>
+
+          <rect x="15" y="45" width="130" height="90" rx="6" fill="#ecfdf5" stroke="#a7f3d0"/>
+          <text x="80" y="70" font-family="Inter" font-size="9" font-weight="700" fill="#047857" text-anchor="middle">SQLite WAL Engine</text>
+          <text x="80" y="86" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">15 Normalized Tables</text>
+          <text x="80" y="100" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">Foreign Key PRAGMA</text>
+          <text x="80" y="114" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">Atomic Transactions</text>
+
+          <rect x="15" y="155" width="130" height="85" rx="6" fill="#ecfdf5" stroke="#a7f3d0"/>
+          <text x="80" y="180" font-family="Inter" font-size="9" font-weight="700" fill="#047857" text-anchor="middle">Isolated Storage</text>
+          <text x="80" y="196" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">Outside Public Web Root</text>
+          <text x="80" y="210" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">UUID File Paths</text>
+          <text x="80" y="224" font-family="Inter" font-size="7.5" fill="#065f46" text-anchor="middle">No Direct Static Access</text>
+        </g>
+
+        <!-- Connecting Lines -->
+        <line x1="210" y1="170" x2="280" y2="170" stroke="#2563eb" stroke-width="2"/>
+        <text x="245" y="162" font-family="Inter" font-size="8" font-weight="700" fill="#2563eb" text-anchor="middle">REST / JSON</text>
+
+        <line x1="530" y1="170" x2="590" y2="170" stroke="#059669" stroke-width="2"/>
+        <text x="560" y="162" font-family="Inter" font-size="8" font-weight="700" fill="#059669" text-anchor="middle">IPC / SQL</text>
+      </svg>
+      <div class="diagram-caption">Figure 2.6: Multi-Tier Physical Component & Deployment Architecture</div>
+    </div>
+  </div>
+
+  <!-- 2.8 ENTITY RELATIONSHIP DIAGRAM (ERD) -->
+  <div class="page-break">
+    <div class="diagram-box avoid-break">
+      <h3>2.7 Complete Relational Entity-Relationship Diagram (ERD)</h3>
+      <svg viewBox="0 0 780 480" width="100%" height="350" xmlns="http://www.w3.org/2000/svg">
+        <rect width="780" height="480" fill="#f8fafc" rx="8" stroke="#cbd5e1" stroke-width="1.5"/>
+
+        <!-- Table: DEPARTMENTS -->
+        <g transform="translate(30, 30)">
+          <rect width="140" height="95" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h140 v20 h-140 z" fill="#dbeafe"/>
+          <text x="70" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#1e40af" text-anchor="middle">DEPARTMENTS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK department_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   name, code [UQ]</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK head_user_id</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK parent_dept_id</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   is_active, created_at</text>
+        </g>
+
+        <!-- Table: USERS -->
+        <g transform="translate(220, 30)">
+          <rect width="150" height="115" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h150 v20 h-150 z" fill="#dbeafe"/>
+          <text x="75" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#1e40af" text-anchor="middle">USERS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK user_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   email [UQ], password_hash</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   full_name, role</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK department_id</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   employee_id [UQ]</text>
+          <text x="8" y="99" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   is_active, last_login</text>
+        </g>
+
+        <!-- Table: REFRESH_TOKENS -->
+        <g transform="translate(420, 30)">
+          <rect width="140" height="80" fill="#ffffff" stroke="#64748b" stroke-width="1.2" rx="4"/>
+          <path d="M0,0 h140 v20 h-140 z" fill="#f1f5f9"/>
+          <text x="70" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#334155" text-anchor="middle">REFRESH_TOKENS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK token_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK user_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   token_hash, expires_at</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   revoked_at, created_at</text>
+        </g>
+
+        <!-- Table: NOTIFICATIONS -->
+        <g transform="translate(600, 30)">
+          <rect width="150" height="95" fill="#ffffff" stroke="#64748b" stroke-width="1.2" rx="4"/>
+          <path d="M0,0 h150 v20 h-150 z" fill="#f1f5f9"/>
+          <text x="75" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#334155" text-anchor="middle">NOTIFICATIONS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK notification_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK user_id, sender_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   type, title, message</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   is_read, priority</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   resource_type/id</text>
+        </g>
+
+        <!-- Table: DOCUMENTS -->
+        <g transform="translate(220, 190)">
+          <rect width="160" height="125" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h160 v20 h-160 z" fill="#dbeafe"/>
+          <text x="80" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#1e40af" text-anchor="middle">DOCUMENTS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK document_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   title, file_path, file_name</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   file_type, file_size, mime</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK uploaded_by [USER]</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK department_id, category_id</text>
+          <text x="8" y="99" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   ocr_text, is_confidential</text>
+          <text x="8" y="112" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   version, status</text>
+        </g>
+
+        <!-- Table: DOCUMENT_VERSIONS -->
+        <g transform="translate(30, 200)">
+          <rect width="150" height="95" fill="#ffffff" stroke="#64748b" stroke-width="1.2" rx="4"/>
+          <path d="M0,0 h150 v20 h-150 z" fill="#f1f5f9"/>
+          <text x="75" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#334155" text-anchor="middle">DOCUMENT_VERSIONS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK version_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK document_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   version_number [UQ]</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   file_path, file_size</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK uploaded_by, change_desc</text>
+        </g>
+
+        <!-- Table: WORKFLOW_INSTANCES -->
+        <g transform="translate(430, 190)">
+          <rect width="160" height="115" fill="#ffffff" stroke="#059669" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h160 v20 h-160 z" fill="#d1fae5"/>
+          <text x="80" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#065f46" text-anchor="middle">WORKFLOW_INSTANCES</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK instance_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK workflow_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK document_id</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK submitted_by</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK current_step_id</text>
+          <text x="8" y="99" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   status, submitted_at</text>
+        </g>
+
+        <!-- Table: WORKFLOW_STEP_LOGS -->
+        <g transform="translate(620, 200)">
+          <rect width="140" height="95" fill="#ffffff" stroke="#059669" stroke-width="1.2" rx="4"/>
+          <path d="M0,0 h140 v20 h-140 z" fill="#d1fae5"/>
+          <text x="70" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#065f46" text-anchor="middle">WORKFLOW_LOGS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK log_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK instance_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK step_id, actor_id</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   action, comments</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   created_at</text>
+        </g>
+
+        <!-- Table: WORKFLOWS -->
+        <g transform="translate(220, 360)">
+          <rect width="150" height="95" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h150 v20 h-150 z" fill="#ede9fe"/>
+          <text x="75" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#5b21b6" text-anchor="middle">WORKFLOWS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK workflow_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   name, description</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK department_id</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK created_by</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   max_days_sla, is_active</text>
+        </g>
+
+        <!-- Table: WORKFLOW_STEPS -->
+        <g transform="translate(430, 360)">
+          <rect width="160" height="95" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" rx="4"/>
+          <path d="M0,0 h160 v20 h-160 z" fill="#ede9fe"/>
+          <text x="80" y="14" font-family="Inter" font-size="8.5" font-weight="700" fill="#5b21b6" text-anchor="middle">WORKFLOW_STEPS</text>
+          <text x="8" y="34" font-family="JetBrains Mono" font-size="7" fill="#0f172a">PK step_id</text>
+          <text x="8" y="47" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK workflow_id</text>
+          <text x="8" y="60" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   step_order, step_name</text>
+          <text x="8" y="73" font-family="JetBrains Mono" font-size="7" fill="#0f172a">   approver_role</text>
+          <text x="8" y="86" font-family="JetBrains Mono" font-size="7" fill="#0f172a">FK approver_user_id, sla_hours</text>
+        </g>
+
+        <!-- Connecting Foreign Key Lines with proper coordinates -->
+        <!-- Departments -> Users -->
+        <line x1="170" y1="70" x2="220" y2="70" stroke="#3b82f6" stroke-width="1.2"/>
+
+        <!-- Users -> Refresh Tokens -->
+        <line x1="370" y1="70" x2="420" y2="70" stroke="#64748b" stroke-width="1.2"/>
+
+        <!-- Users -> Notifications -->
+        <line x1="370" y1="50" x2="600" y2="50" stroke="#64748b" stroke-width="1.2"/>
+
+        <!-- Users -> Documents -->
+        <line x1="295" y1="145" x2="295" y2="190" stroke="#3b82f6" stroke-width="1.2"/>
+
+        <!-- Documents -> Document Versions -->
+        <line x1="220" y1="240" x2="180" y2="240" stroke="#64748b" stroke-width="1.2"/>
+
+        <!-- Documents -> Workflow Instances -->
+        <line x1="380" y1="240" x2="430" y2="240" stroke="#059669" stroke-width="1.2"/>
+
+        <!-- Workflows -> Workflow Steps -->
+        <line x1="370" y1="410" x2="430" y2="410" stroke="#7c3aed" stroke-width="1.2"/>
+
+        <!-- Workflows -> Workflow Instances -->
+        <line x1="330" y1="360" x2="450" y2="305" stroke="#7c3aed" stroke-width="1.2"/>
+
+        <!-- Workflow Instances -> Workflow Logs -->
+        <line x1="590" y1="240" x2="620" y2="240" stroke="#059669" stroke-width="1.2"/>
+      </svg>
+      <div class="diagram-caption">Figure 2.7: Entity-Relationship Diagram (ERD) with Normalized Relational Mappings</div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: COMPREHENSIVE DATA DICTIONARY -->
+  <div class="page-break">
+    <h2>3. Complete Relational Data Dictionary</h2>
+    <p>This data dictionary provides full structural, logical, and constraint specifications for all 15 normalized tables in the SQLite database schema.</p>
+
+    <!-- TABLE 1: DEPARTMENTS -->
+    <div class="avoid-break">
+      <h3>3.1 Table: <span class="code-text">departments</span></h3>
+      <p style="font-size: 8pt; color: #64748b;">Stores academic colleges, administrative divisions, and student service departments.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Column Name</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 18%;">Foreign Key</th>
+            <th style="width: 22%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">department_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>None (UUID v4)</td>
+            <td>—</td>
+            <td>Unique identifier for the department.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span> <span class="badge-uq">UNIQUE</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Official name of the academic or administrative unit.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">code</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span> <span class="badge-uq">UNIQUE</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Alphanumeric short code (e.g. CSE, ECE, REG).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">head_user_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td><span class="badge-fk">users(user_id)</span></td>
+            <td>User ID of the department head / chairperson.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">parent_dept_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td><span class="badge-fk">departments(id)</span></td>
+            <td>Parent department for hierarchical college structures.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">is_active</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>1</td>
+            <td>—</td>
+            <td>Boolean flag (1 = Active, 0 = Deactivated).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">created_at</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>datetime('now')</td>
+            <td>—</td>
+            <td>ISO 8601 creation timestamp.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 2: USERS -->
+    <div class="avoid-break">
+      <h3>3.2 Table: <span class="code-text">users</span></h3>
+      <p style="font-size: 8pt; color: #64748b;">Stores user identity records, authentication credentials, roles, and status flags.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Column Name</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 18%;">Foreign Key</th>
+            <th style="width: 22%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">user_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>None (UUID v4)</td>
+            <td>—</td>
+            <td>Unique identifier for the user account.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">email</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span> <span class="badge-uq">UNIQUE</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Normalized lowercase university email address.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">password_hash</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Bcrypt salted hash with 10 work rounds.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">full_name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Full legal name of the user.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">role</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>CHECK (role IN (..))</td>
+            <td>One of: SUPER_ADMIN, DEPT_ADMIN, FACULTY, STUDENT.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">department_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td><span class="badge-fk">departments(id)</span></td>
+            <td>Assigned academic department.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">employee_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-uq">UNIQUE</span> Nullable</td>
+            <td>NULL</td>
+            <td>—</td>
+            <td>University ID or Student Matriculation Number.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">avatar_url</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td>—</td>
+            <td>Optional profile image URL or avatar asset.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">is_active</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>1</td>
+            <td>—</td>
+            <td>1 for active user, 0 for deactivated user.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">last_login</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td>—</td>
+            <td>Timestamp of most recent successful login.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">created_at</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>datetime('now')</td>
+            <td>—</td>
+            <td>Account registration timestamp.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">updated_at</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>datetime('now')</td>
+            <td>—</td>
+            <td>Timestamp of last user record update.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 3: REFRESH_TOKENS -->
+    <div class="avoid-break">
+      <h3>3.3 Table: <span class="code-text">refresh_tokens</span></h3>
+      <p style="font-size: 8pt; color: #64748b;">Stores rotated cryptographic refresh tokens for secure session persistence.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Column Name</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 18%;">Foreign Key</th>
+            <th style="width: 22%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">token_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>—</td>
+            <td>Unique session token identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">user_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td><span class="badge-fk">users(user_id) ON DELETE CASCADE</span></td>
+            <td>Owner user of the refresh session.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">token_hash</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Cryptographic refresh token hash string.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">expires_at</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Expiration timestamp (default: 7 days).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">revoked_at</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td>—</td>
+            <td>Revocation timestamp if manually logged out.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DATA DICTIONARY CONTINUED (DOCUMENTS, VERSIONS, WORKFLOWS) -->
+  <div class="page-break">
+    <!-- TABLE 4 & 5: CATEGORIES & TAGS -->
+    <div class="avoid-break">
+      <h3>3.4 Table: <span class="code-text">doc_categories</span> & <span class="code-text">tags</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 20%;">Table / Column</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 38%;">Description & Business Semantics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">doc_categories.category_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Unique category identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">doc_categories.name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span> <span class="badge-uq">UQ</span></td>
+            <td>—</td>
+            <td>Category label (e.g. Academic Transcript, Syllabus, Financial Aid).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">doc_categories.color</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>'#007AFF'</td>
+            <td>Hex color code used in UI tags.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">tags.tag_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Unique flexible tag identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">tags.name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span> <span class="badge-uq">UQ</span></td>
+            <td>—</td>
+            <td>Tag keyword (e.g. URGENT, 2026_FALL, ACCREDITATION).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 6: DOCUMENTS -->
+    <div class="avoid-break">
+      <h3>3.5 Table: <span class="code-text">documents</span></h3>
+      <p style="font-size: 8pt; color: #64748b;">Stores core document records, file storage pointers, OCR contents, and confidentiality status.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Column Name</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 18%;">Foreign Key</th>
+            <th style="width: 22%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">document_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>—</td>
+            <td>Unique document identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">title</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Human-readable title of document.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">file_path</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Isolated storage disk path outside web root.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">file_name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Original sanitized uploaded file name.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">file_type</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>CHECK (file_type IN (..))</td>
+            <td>One of: 'pdf', 'docx', 'image', 'excel', 'other'.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">file_size</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>0</td>
+            <td>—</td>
+            <td>File size in bytes (max: 50MB).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">mime_type</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>MIME type header (e.g. application/pdf).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">uploaded_by</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td><span class="badge-fk">users(user_id)</span></td>
+            <td>User ID of uploader.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">department_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td><span class="badge-fk">departments(id)</span></td>
+            <td>Associated academic department.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">category_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td><span class="badge-fk">doc_categories(id)</span></td>
+            <td>Associated category.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">ocr_text</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td>—</td>
+            <td>Extracted OCR full text for search & AI.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">is_confidential</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>0</td>
+            <td>—</td>
+            <td>1 = Confidential (Restricted), 0 = Public.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">version</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>1</td>
+            <td>—</td>
+            <td>Current active version number.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">status</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>'active'</td>
+            <td>CHECK (status IN (..))</td>
+            <td>'draft', 'active', 'archived', 'deleted'.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 7: DOCUMENT_VERSIONS -->
+    <div class="avoid-break">
+      <h3>3.6 Table: <span class="code-text">document_versions</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Column Name</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 18%;">Foreign Key</th>
+            <th style="width: 22%;">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">version_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>—</td>
+            <td>Unique version revision record ID.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">document_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td><span class="badge-fk">documents(id) ON DELETE CASCADE</span></td>
+            <td>Parent document reference.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">version_number</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td><span class="badge-uq">UNIQUE(doc, ver)</span></td>
+            <td>Sequential revision number (1, 2, 3...).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">file_path</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>—</td>
+            <td>Disk storage path for this specific revision.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">change_description</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>'Initial version'</td>
+            <td>—</td>
+            <td>Changelog summary for the revision.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DATA DICTIONARY CONTINUED (WORKFLOWS, INSTANCES, AUDIT) -->
+  <div class="page-break">
+    <!-- TABLE 9 & 10: WORKFLOWS & WORKFLOW_STEPS -->
+    <div class="avoid-break">
+      <h3>3.7 Table: <span class="code-text">workflows</span> & <span class="code-text">workflow_steps</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 20%;">Table / Column</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 38%;">Description & Business Semantics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">workflows.workflow_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Workflow template master identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflows.name</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>Title (e.g. Course Add/Drop Petition, Grade Change Approval).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflows.max_days_sla</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>5</td>
+            <td>Maximum total allowable days for end-to-end completion.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_steps.step_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Unique workflow step definition ID.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_steps.step_order</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>Execution sequence order (1 = Step 1, 2 = Step 2...).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_steps.approver_role</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>Required approver role (DEPT_ADMIN, FACULTY, SUPER_ADMIN).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_steps.sla_hours</span></td>
+            <td>INTEGER</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>48</td>
+            <td>SLA resolution deadline in hours for this single step.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 11 & 12: WORKFLOW_INSTANCES & LOGS -->
+    <div class="avoid-break">
+      <h3>3.8 Table: <span class="code-text">workflow_instances</span> & <span class="code-text">workflow_step_logs</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 20%;">Table / Column</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 38%;">Description & Business Semantics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">workflow_instances.instance_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Active running workflow execution instance ID.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_instances.document_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td><span class="badge-fk">documents</span></td>
+            <td>Target document being reviewed / approved.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_instances.status</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>'pending'</td>
+            <td>Status: 'pending', 'in_progress', 'approved', 'rejected', 'cancelled'.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_instances.current_step_id</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td><span class="badge-fk">workflow_steps</span></td>
+            <td>Pointer to the active pending approval step.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_step_logs.log_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Immutable audit log entry of step decision.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_step_logs.action</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>One of: 'SUBMIT', 'APPROVE', 'REJECT', 'DELEGATE', 'CANCEL'.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">workflow_step_logs.comments</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>NULL</td>
+            <td>Reviewer comments / justification (Mandatory for rejection).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLE 14: AUDIT_LOGS -->
+    <div class="avoid-break">
+      <h3>3.9 Table: <span class="code-text">audit_logs</span> & <span class="code-text">system_settings</span></h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 20%;">Table / Column</th>
+            <th style="width: 12%;">Data Type</th>
+            <th style="width: 15%;">Constraints</th>
+            <th style="width: 15%;">Default</th>
+            <th style="width: 38%;">Description & Business Semantics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code-text">audit_logs.log_id</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>UUID v4</td>
+            <td>Immutable security audit trail event identifier.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">audit_logs.action</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>Action tag (e.g. LOGIN_SUCCESS, DOCUMENT_UPLOAD, USER_CREATE).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">audit_logs.ip_address</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>—</td>
+            <td>Client IP address recorded for forensic traceability.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">audit_logs.metadata</span></td>
+            <td>TEXT</td>
+            <td>Nullable</td>
+            <td>—</td>
+            <td>JSON string containing event payload attributes and diffs.</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">system_settings.key</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-pk">PRIMARY KEY</span></td>
+            <td>—</td>
+            <td>Configuration key (e.g. university_name, max_upload_size).</td>
+          </tr>
+          <tr>
+            <td><span class="code-text">system_settings.value</span></td>
+            <td>TEXT</td>
+            <td><span class="badge-nn">NOT NULL</span></td>
+            <td>—</td>
+            <td>Dynamic system configuration value string.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: SECURITY & COMPLIANCE SPECIFICATIONS -->
+  <div class="page-break">
+    <h2>4. Security, Validation & Rate Limiting Architecture</h2>
+    
+    <h3>4.1 Tiered Rate Limiting & DDoS Shield</h3>
+    <p>The system enforces 5 distinct rate-limiting tiers. On authentication endpoints, an in-memory exponential backoff store mitigates brute-force attacks by increasing delays upon consecutive failures rather than imposing an irreversible hard account lockout.</p>
+    <div class="alert-box">
+      <strong>Exponential Backoff Formula:</strong><br>
+      <code>Delay(seconds) = min(baseSeconds * 2^(failedAttempts - freeAttempts), maxSeconds)</code><br>
+      <em>For default settings: 5 free attempts -> 2s -> 4s -> 8s -> 16s -> 32s ... capped at 1800s (30 minutes).</em>
+    </div>
+
+    <h3>4.2 Strict Input Schema Validation (Zod)</h3>
+    <p>Every HTTP request body, URL path parameter, and query string is validated against strict Zod schemas with <code>.strict()</code> to prevent field pollution or mass assignment attacks. Any malformed type, invalid regex, out-of-range integer, or unrecognized key is immediately rejected with HTTP 400 <code>VALIDATION_ERROR</code> and structured issue diagnostics.</p>
+
+    <h3>4.3 File Upload Security & Magic-Byte Engine</h3>
+    <p>Uploaded documents are inspected in binary format immediately post-upload:</p>
+    <ul>
+      <li><strong>Extension Whitelist:</strong> Only <code>.pdf, .docx, .doc, .xlsx, .xls, .jpg, .jpeg, .png, .tiff, .txt</code> allowed.</li>
+      <li><strong>Executable Header Block:</strong> Binary scans reject Linux ELF (<code>0x7F 'ELF'</code>), Windows PE (<code>'MZ'</code>), Mach-O, shell shebangs (<code>#!/</code>), and embedded script tags.</li>
+      <li><strong>Isolated Storage:</strong> Uploaded files are written to <code>/uploads</code> outside public web root with cryptographically random UUID names.</li>
+      <li><strong>Sandboxed Downloads:</strong> Downloads include <code>Content-Disposition: attachment</code>, <code>X-Content-Type-Options: nosniff</code>, and <code>Content-Security-Policy: default-src 'none'; sandbox</code>.</li>
+    </ul>
+
+    <h3>4.4 Information Leakage Prevention & Error Sanitization</h3>
+    <p>All client error responses pass through <code>sanitizeClientErrorMessage</code>. Internal absolute file paths, database constraint names, SQL query strings, and V8 runtime stack traces are completely stripped before returning to the user, while comprehensive diagnostic traces are preserved in server logs.</p>
+  </div>
+
+  <!-- SECTION 5: API SPECIFICATIONS -->
+  <div class="page-break">
+    <h2>5. REST API Endpoint Catalog</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 10%;">Method</th>
+          <th style="width: 32%;">Endpoint URL</th>
+          <th style="width: 22%;">Required RBAC Role</th>
+          <th style="width: 36%;">Function & Payload Schema</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="status-pill status-blue">POST</span></td>
+          <td><span class="code-text">/api/v1/auth/login</span></td>
+          <td>Public (Rate-limited)</td>
+          <td>Authenticates credentials, returns JWT & Refresh token.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">POST</span></td>
+          <td><span class="code-text">/api/v1/auth/register</span></td>
+          <td>Public (Rate-limited)</td>
+          <td>Registers user account with email, password, full_name.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-green">GET</span></td>
+          <td><span class="code-text">/api/v1/documents</span></td>
+          <td>Authenticated</td>
+          <td>Lists documents with pagination, filters, and tag metadata.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">POST</span></td>
+          <td><span class="code-text">/api/v1/documents/upload</span></td>
+          <td>Authenticated (Upload Tier)</td>
+          <td>Multipart upload with binary magic-byte inspection & OCR.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-green">GET</span></td>
+          <td><span class="code-text">/api/v1/documents/:id/download</span></td>
+          <td>Authenticated (RBAC/IDOR)</td>
+          <td>Secure sandboxed file stream with attachment headers.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">POST</span></td>
+          <td><span class="code-text">/api/v1/workflows</span></td>
+          <td>SUPER_ADMIN, DEPT_ADMIN</td>
+          <td>Creates workflow template with ordered steps and SLAs.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-blue">POST</span></td>
+          <td><span class="code-text">/api/v1/workflow-instances</span></td>
+          <td>Authenticated</td>
+          <td>Initiates new workflow instance on target document.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-purple">POST</span></td>
+          <td><span class="code-text">/api/v1/workflow-instances/:id/approve</span></td>
+          <td>Authorized Approver</td>
+          <td>Approves current step and advances instance to next step.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-purple">POST</span></td>
+          <td><span class="code-text">/api/v1/workflow-instances/:id/reject</span></td>
+          <td>Authorized Approver</td>
+          <td>Rejects instance with mandatory justification comment.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-green">GET</span></td>
+          <td><span class="code-text">/api/v1/audit</span></td>
+          <td>SUPER_ADMIN, DEPT_ADMIN</td>
+          <td>Search immutable security audit logs with action filters.</td>
+        </tr>
+        <tr>
+          <td><span class="status-pill status-green">GET</span></td>
+          <td><span class="code-text">/api/v1/analytics/admin</span></td>
+          <td>SUPER_ADMIN, DEPT_ADMIN</td>
+          <td>University-wide metrics, SLA statuses, and category trends.</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div style="text-align: center; margin-top: 25pt; padding-top: 15pt; border-top: 1pt solid #e2e8f0; color: #64748b; font-size: 8.5pt;">
+      <strong>IUDWAS Architectural Master Documentation</strong> — End of Document.
+    </div>
+  </div>
+
+</body>
+</html>`;
+
+const htmlFilePath = path.join(__dirname, 'documentation.html');
+const pdfFilePath = path.join(__dirname, '..', 'IUDWAS_System_Documentation.pdf');
+
+fs.writeFileSync(htmlFilePath, htmlContent, 'utf-8');
+console.log('HTML Documentation generated at:', htmlFilePath);
+
+// Compile to PDF using Headless Google Chrome
+try {
+  console.log('Compiling PDF via Headless Chrome...');
+  const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  const command = `"${chromePath}" --headless=new --disable-gpu --no-sandbox --print-to-pdf="${pdfFilePath}" --print-to-pdf-no-header "${htmlFilePath}"`;
+  execSync(command, { stdio: 'inherit' });
+
+  const stats = fs.statSync(pdfFilePath);
+  console.log(`\nSUCCESS: PDF generated at ${pdfFilePath} (${stats.size} bytes)`);
+} catch (err) {
+  console.error('Error generating PDF:', err);
+  process.exit(1);
+}
