@@ -123,7 +123,7 @@ export const AdminDepartmentsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-purple-500/10 text-apple-purple flex-shrink-0">
-            <Building className="w-4 h-4" />
+            <Building className="w-5 h-5" />
           </div>
           <div>
             <span className="font-semibold text-neutral-900 dark:text-white">{row.name}</span>
@@ -155,7 +155,7 @@ export const AdminDepartmentsPage: React.FC = () => {
       accessorKey: 'user_count',
       cell: (row) => (
         <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-          <Users className="w-3.5 h-3.5" />
+          <Users className="w-4 h-4" />
           <span>{row.user_count || 0}</span>
         </div>
       ),
@@ -175,17 +175,17 @@ export const AdminDepartmentsPage: React.FC = () => {
         <div className="flex items-center gap-1.5 justify-end">
           <button
             onClick={() => openEditModal(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Edit Department"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => setDeleteTargetDept(row)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete / Deactivate"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -208,7 +208,7 @@ export const AdminDepartmentsPage: React.FC = () => {
         <AppleButton
           variant="primary"
           size="md"
-          icon={<Plus className="w-4 h-4" />}
+          icon={<Plus className="w-5 h-5" />}
           onClick={openCreateModal}
         >
           Add Department

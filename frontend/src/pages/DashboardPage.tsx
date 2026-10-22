@@ -166,7 +166,7 @@ export const DashboardPage: React.FC = () => {
             <AppleButton
               variant="glass"
               size="md"
-              icon={<Send className="w-4 h-4 text-apple-blue" />}
+              icon={<Send className="w-5 h-5 text-apple-blue" />}
               onClick={() => setIsSendNotifModalOpen(true)}
             >
               Send Notice
@@ -175,7 +175,7 @@ export const DashboardPage: React.FC = () => {
           <AppleButton
             variant="primary"
             size="md"
-            icon={<Upload className="w-4 h-4" />}
+            icon={<Upload className="w-5 h-5" />}
             onClick={() => navigate('/documents?action=upload')}
           >
             Upload Document
@@ -183,7 +183,7 @@ export const DashboardPage: React.FC = () => {
           <AppleButton
             variant="glass"
             size="md"
-            icon={<PlusCircle className="w-4 h-4" />}
+            icon={<PlusCircle className="w-5 h-5" />}
             onClick={() => navigate('/workflows?action=new')}
           >
             New Request
@@ -275,7 +275,7 @@ export const DashboardPage: React.FC = () => {
                     </AppleBadge>
                   </div>
                   <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-neutral-400" />
+                    <FileText className="w-4 h-4 text-neutral-400" />
                     <span>{inst.document_title}</span>
                   </p>
                   <p className="text-[11px] text-neutral-400 mt-1">
@@ -287,7 +287,7 @@ export const DashboardPage: React.FC = () => {
                   <AppleButton
                     variant="ghost"
                     size="sm"
-                    icon={<Eye className="w-3.5 h-3.5" />}
+                    icon={<Eye className="w-4 h-4" />}
                     onClick={() => navigate(`/workflows?view=${inst.instance_id}`)}
                   >
                     View Details
@@ -295,7 +295,7 @@ export const DashboardPage: React.FC = () => {
                   <AppleButton
                     variant="destructive"
                     size="sm"
-                    icon={<X className="w-3.5 h-3.5" />}
+                    icon={<X className="w-4 h-4" />}
                     onClick={() => setActionModal({ type: 'reject', instance: inst })}
                   >
                     Reject
@@ -303,7 +303,7 @@ export const DashboardPage: React.FC = () => {
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<Check className="w-3.5 h-3.5" />}
+                    icon={<Check className="w-4 h-4" />}
                     onClick={() => setActionModal({ type: 'approve', instance: inst })}
                   >
                     Approve
@@ -321,14 +321,14 @@ export const DashboardPage: React.FC = () => {
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Clock className="w-4 h-4 text-apple-orange" />
+              <Clock className="w-5 h-5 text-apple-orange" />
               Live Request Status
             </h2>
             <button
               onClick={() => navigate('/workflows')}
               className="text-xs font-semibold text-apple-blue hover:underline flex items-center gap-1"
             >
-              View All Requests <ArrowRight className="w-3.5 h-3.5" />
+              View All Requests <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -341,7 +341,7 @@ export const DashboardPage: React.FC = () => {
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<PlusCircle className="w-3.5 h-3.5" />}
+                    icon={<PlusCircle className="w-4 h-4" />}
                     onClick={() => navigate('/workflows?action=new')}
                   >
                     Start New Request
@@ -407,14 +407,14 @@ export const DashboardPage: React.FC = () => {
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-4 h-4 text-apple-blue" />
+              <FileText className="w-5 h-5 text-apple-blue" />
               Recent Documents
             </h2>
             <button
               onClick={() => navigate('/documents')}
               className="text-xs font-semibold text-apple-blue hover:underline flex items-center gap-1"
             >
-              Document Vault <ArrowRight className="w-3.5 h-3.5" />
+              Document Vault <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -427,7 +427,7 @@ export const DashboardPage: React.FC = () => {
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<Upload className="w-3.5 h-3.5" />}
+                    icon={<Upload className="w-4 h-4" />}
                     onClick={() => navigate('/documents?action=upload')}
                   >
                     Upload Document
@@ -443,13 +443,13 @@ export const DashboardPage: React.FC = () => {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="p-2.5 rounded-xl bg-apple-blue/10 text-apple-blue flex-shrink-0">
-                      <FileText className="w-4 h-4" />
+                      <FileText className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
                       <h4 className="text-xs font-semibold text-neutral-900 dark:text-white truncate">
                         {doc.title}
                       </h4>
-                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                         v{doc.version} · {doc.category_name || 'General'} · {(doc.file_size / 1024).toFixed(0)} KB
                       </p>
                     </div>
@@ -482,7 +482,7 @@ export const DashboardPage: React.FC = () => {
               variant="primary"
               size="sm"
               className="w-full"
-              icon={<Bot className="w-3.5 h-3.5" />}
+              icon={<Bot className="w-4 h-4" />}
               onClick={() => navigate('/ai-assistant')}
             >
               Open AI Chatbot & OCR Engine
@@ -498,7 +498,7 @@ export const DashboardPage: React.FC = () => {
           onClose={() => setActionModal(null)}
           title={actionModal.type === 'approve' ? 'Approve Workflow Step' : 'Reject Workflow Request'}
           subtitle={`Request: ${actionModal.instance.workflow_name} (${actionModal.instance.document_title})`}
-          maxWidth="md"
+          maxWidth="3xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setActionModal(null)} disabled={actionLoading}>

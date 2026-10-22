@@ -23,7 +23,7 @@ export const AppleSelect = forwardRef<HTMLSelectElement, AppleSelectProps>(({
   return (
     <div className="w-full space-y-1.5 text-left">
       {label && (
-        <label htmlFor={selectId} className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+        <label htmlFor={selectId} className="block text-[13px] font-semibold text-neutral-700 dark:text-neutral-300">
           {label}
         </label>
       )}
@@ -45,13 +45,13 @@ export const AppleSelect = forwardRef<HTMLSelectElement, AppleSelectProps>(({
             : children}
         </select>
         <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </div>
       {error && <p className="text-xs text-apple-red font-medium">{error}</p>}
-      {hint && !error && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{hint}</p>}
+      {hint && !error && <p className="text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>}
     </div>
   );
 });

@@ -159,7 +159,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
           </AppleButton>
           <AppleButton
             variant="primary"
-            icon={<Send className="w-4 h-4" />}
+            icon={<Send className="w-5 h-5" />}
             onClick={handleSend}
             loading={sending}
             disabled={!confirmedSignature || !title.trim() || !message.trim()}
@@ -247,7 +247,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
             <AppleInput
               label="Search Recipient by Name or Email *"
               placeholder="Type at least 2 characters to search all users..."
-              icon={<Users className="w-4 h-4" />}
+              icon={<Users className="w-5 h-5" />}
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
               hint="Searches every registered user — not limited to the first 100 accounts."
@@ -300,7 +300,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         <div className="p-4 rounded-2xl bg-apple-blue/[0.04] dark:bg-apple-blue/[0.08] border border-apple-blue/20 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-apple-blue font-semibold text-xs">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-5 h-5" />
               <span>Cryptographic Sender Signature & Identity Seal</span>
             </div>
             <AppleBadge variant="blue" size="sm">
@@ -320,7 +320,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
               <p className="font-bold text-neutral-900 dark:text-white truncate">
                 {user?.full_name}
               </p>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                 {roleLabel} · {user?.department_name || 'Academic Administration'}
               </p>
             </div>
@@ -332,7 +332,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
               id="confirm-sig-check"
               checked={confirmedSignature}
               onChange={(e) => setConfirmedSignature(e.target.checked)}
-              className="mt-0.5 rounded text-apple-blue focus:ring-apple-blue w-4 h-4 cursor-pointer"
+              className="mt-0.5 rounded text-apple-blue focus:ring-apple-blue w-5 h-5 cursor-pointer"
             />
             <label
               htmlFor="confirm-sig-check"

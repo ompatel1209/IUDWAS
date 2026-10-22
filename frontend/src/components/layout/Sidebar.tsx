@@ -27,32 +27,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const navItemClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-150 apple-press select-none ${
+    `flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-150 apple-press select-none ${
       isActive
         ? 'bg-apple-blue text-white shadow-sm border-t border-white/25 font-bold'
         : 'text-neutral-600 dark:text-neutral-400 hover:bg-black/5 dark:hover:bg-white/10 hover:text-neutral-900 dark:hover:text-white'
     }`;
 
   const mainNav = [
-    { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { to: '/documents', label: 'Documents', icon: <FileText className="w-4 h-4" /> },
-    { to: '/workflows', label: 'Workflow Requests', icon: <GitPullRequest className="w-4 h-4" /> },
-    { to: '/ai-assistant', label: 'AI Assistant & OCR', icon: <Bot className="w-4 h-4" /> },
-    { to: '/notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
+    { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { to: '/documents', label: 'Documents', icon: <FileText className="w-5 h-5" /> },
+    { to: '/workflows', label: 'Workflow Requests', icon: <GitPullRequest className="w-5 h-5" /> },
+    { to: '/ai-assistant', label: 'AI Assistant & OCR', icon: <Bot className="w-5 h-5" /> },
+    { to: '/notifications', label: 'Notifications', icon: <Bell className="w-5 h-5" /> },
   ];
 
   const adminNav = [
-    { to: '/admin', label: 'Admin Overview', icon: <Shield className="w-4 h-4" />, exact: true },
-    { to: '/admin/users', label: 'User Management', icon: <Users className="w-4 h-4" /> },
-    { to: '/admin/departments', label: 'Departments', icon: <Building className="w-4 h-4" /> },
-    { to: '/admin/documents', label: 'All Documents', icon: <FileText className="w-4 h-4" /> },
-    { to: '/admin/workflows', label: 'Workflow Templates', icon: <CheckSquare className="w-4 h-4" /> },
-    { to: '/admin/categories-tags', label: 'Categories & Tags', icon: <Tags className="w-4 h-4" /> },
-    { to: '/admin/audit', label: 'Audit Trail', icon: <History className="w-4 h-4" /> },
+    { to: '/admin', label: 'Admin Overview', icon: <Shield className="w-5 h-5" />, exact: true },
+    { to: '/admin/users', label: 'User Management', icon: <Users className="w-5 h-5" /> },
+    { to: '/admin/departments', label: 'Departments', icon: <Building className="w-5 h-5" /> },
+    { to: '/admin/documents', label: 'All Documents', icon: <FileText className="w-5 h-5" /> },
+    { to: '/admin/workflows', label: 'Workflow Templates', icon: <CheckSquare className="w-5 h-5" /> },
+    { to: '/admin/categories-tags', label: 'Categories & Tags', icon: <Tags className="w-5 h-5" /> },
+    { to: '/admin/audit', label: 'Audit Trail', icon: <History className="w-5 h-5" /> },
   ];
 
   if (isSuperAdmin) {
-    adminNav.push({ to: '/admin/settings', label: 'System Settings', icon: <Settings className="w-4 h-4" /> });
+    adminNav.push({ to: '/admin/settings', label: 'System Settings', icon: <Settings className="w-5 h-5" /> });
   }
 
   const content = (

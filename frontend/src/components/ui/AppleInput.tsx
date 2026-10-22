@@ -26,7 +26,7 @@ export const AppleInput = forwardRef<HTMLInputElement, AppleInputProps>(({
   return (
     <div className="w-full space-y-1.5 text-left">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+        <label htmlFor={inputId} className="block text-[13px] font-semibold text-neutral-700 dark:text-neutral-300">
           {label}
         </label>
       )}
@@ -54,15 +54,15 @@ export const AppleInput = forwardRef<HTMLInputElement, AppleInputProps>(({
             className="absolute right-3.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-apple-blue/40 p-1 rounded-full apple-press"
           >
             {showPassword ? (
-              <EyeOff className="w-4 h-4" />
+              <EyeOff className="w-5 h-5" />
             ) : (
-              <Eye className="w-4 h-4" />
+              <Eye className="w-5 h-5" />
             )}
           </button>
         )}
       </div>
       {error && <p className="text-xs text-apple-red font-medium">{error}</p>}
-      {hint && !error && <p className="text-[11px] text-neutral-500 dark:text-neutral-400">{hint}</p>}
+      {hint && !error && <p className="text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>}
     </div>
   );
 });

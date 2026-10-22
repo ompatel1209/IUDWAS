@@ -330,7 +330,7 @@ export const DocumentsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-apple-blue/10 text-apple-blue flex-shrink-0">
-            <FileText className="w-4 h-4" />
+            <FileText className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -339,7 +339,7 @@ export const DocumentsPage: React.FC = () => {
               </span>
               {row.is_confidential && (
                 <span title="Confidential document">
-                  <Lock className="w-3.5 h-3.5 text-apple-purple" />
+                  <Lock className="w-4 h-4 text-apple-purple" />
                 </span>
               )}
             </div>
@@ -392,29 +392,29 @@ export const DocumentsPage: React.FC = () => {
         <div className="flex items-center gap-1.5 justify-end">
           <button
             onClick={() => openDocumentDetails(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Inspect Details & OCR"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-5 h-5" />
           </button>
           <button
             onClick={() =>
               handleDownload(row.document_id, row.file_name || row.title || 'document')
             }
             disabled={downloadingId === row.document_id}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
             title="Download Document"
             aria-label={`Download ${row.title || 'document'}`}
           >
-            <Download className={`w-4 h-4 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
+            <Download className={`w-5 h-5 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
           </button>
           <button
             onClick={() => handleDeleteRequest(row)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete Document"
             aria-label={`Delete ${row.title || 'document'}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -437,7 +437,7 @@ export const DocumentsPage: React.FC = () => {
         <AppleButton
           variant="primary"
           size="md"
-          icon={<Upload className="w-4 h-4" />}
+          icon={<Upload className="w-5 h-5" />}
           onClick={() => setIsUploadModalOpen(true)}
         >
           Upload Document
@@ -450,7 +450,7 @@ export const DocumentsPage: React.FC = () => {
           <div className="lg:col-span-3">
             <AppleInput
               placeholder="Search by title, filename, or OCR text..."
-              icon={<Search className="w-4 h-4" />}
+              icon={<Search className="w-5 h-5" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -579,7 +579,7 @@ export const DocumentsPage: React.FC = () => {
         onClose={() => setIsUploadModalOpen(false)}
         title="Upload University Document"
         subtitle="Automatic AI OCR text extraction and indexing will be applied."
-        maxWidth="2xl"
+        maxWidth="3xl"
         actions={
           <>
             <AppleButton variant="secondary" onClick={() => setIsUploadModalOpen(false)} disabled={uploading}>
@@ -685,14 +685,14 @@ export const DocumentsPage: React.FC = () => {
           onClose={() => setIsDetailModalOpen(false)}
           title={selectedDoc.title}
           subtitle={`Version ${selectedDoc.version} · ${(selectedDoc.file_size / 1024).toFixed(0)} KB · Uploaded by ${selectedDoc.uploader_name || 'User'}`}
-          maxWidth="3xl"
+          maxWidth="4xl"
           actions={
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <AppleButton
                   variant="destructive"
                   size="sm"
-                  icon={<Trash2 className="w-3.5 h-3.5" />}
+                  icon={<Trash2 className="w-4 h-4" />}
                   onClick={() => handleDeleteRequest(selectedDoc)}
                 >
                   Delete
@@ -700,7 +700,7 @@ export const DocumentsPage: React.FC = () => {
                 <AppleButton
                   variant="ghost"
                   size="sm"
-                  icon={<Share2 className="w-3.5 h-3.5" />}
+                  icon={<Share2 className="w-4 h-4" />}
                   onClick={() => setIsShareModalOpen(true)}
                 >
                   Share
@@ -710,7 +710,7 @@ export const DocumentsPage: React.FC = () => {
                 <AppleButton
                   variant="secondary"
                   size="sm"
-                  icon={<Plus className="w-3.5 h-3.5" />}
+                  icon={<Plus className="w-4 h-4" />}
                   onClick={() => setIsVersionModalOpen(true)}
                 >
                   Upload New Version
@@ -718,7 +718,7 @@ export const DocumentsPage: React.FC = () => {
                 <AppleButton
                   variant="primary"
                   size="sm"
-                  icon={<Download className={`w-3.5 h-3.5 ${downloadingId === selectedDoc.document_id ? 'animate-pulse' : ''}`} />}
+                  icon={<Download className={`w-4 h-4 ${downloadingId === selectedDoc.document_id ? 'animate-pulse' : ''}`} />}
                   loading={downloadingId === selectedDoc.document_id}
                   onClick={() =>
                     handleDownload(
@@ -756,7 +756,7 @@ export const DocumentsPage: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-apple-purple" />
+                  <Sparkles className="w-4 h-4 text-apple-purple" />
                   AI Extracted OCR Content
                 </h4>
                 <AppleBadge variant="teal" size="sm">
@@ -771,7 +771,7 @@ export const DocumentsPage: React.FC = () => {
             {/* Version History Table */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5 text-apple-blue" />
+                <History className="w-4 h-4 text-apple-blue" />
                 Version History
               </h4>
               <div className="divide-y divide-black/5 dark:divide-white/5 rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden">
@@ -794,11 +794,11 @@ export const DocumentsPage: React.FC = () => {
                         )
                       }
                       disabled={downloadingId === selectedDoc.document_id}
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+                      className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
                       title="Download this version"
                       aria-label={`Download version ${v.version_number}`}
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-5 h-5" />
                     </button>
                   </div>
                 ))}
@@ -815,7 +815,7 @@ export const DocumentsPage: React.FC = () => {
           onClose={() => setIsVersionModalOpen(false)}
           title={`Upload New Version for "${selectedDoc.title}"`}
           subtitle={`Will create Version ${selectedDoc.version + 1}`}
-          maxWidth="md"
+          maxWidth="lg"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setIsVersionModalOpen(false)} disabled={versionUploading}>
@@ -855,7 +855,7 @@ export const DocumentsPage: React.FC = () => {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           title={`Share Document: "${selectedDoc.title}"`}
-          maxWidth="md"
+          maxWidth="2xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setIsShareModalOpen(false)} disabled={sharing}>

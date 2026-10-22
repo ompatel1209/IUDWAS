@@ -68,13 +68,13 @@ export const ForgotPasswordPage: React.FC = () => {
               {issuedToken && (
                 <div className="text-left space-y-2 rounded-2xl bg-apple-blue/5 border border-apple-blue/20 p-4">
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold text-apple-blue">
-                    <KeyRound className="w-3.5 h-3.5" />
+                    <KeyRound className="w-4 h-4" />
                     Your recovery code (valid 15 minutes)
                   </p>
                   <p className="font-mono text-xs text-neutral-800 dark:text-neutral-200 break-all select-all bg-white/60 dark:bg-black/40 rounded-lg px-3 py-2">
                     {issuedToken}
                   </p>
-                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                     Email delivery is not configured in this build, so the code is
                     shown here. In production it is sent to the account's inbox
                     instead. Use it on the next screen to verify your identity.
@@ -109,7 +109,7 @@ export const ForgotPasswordPage: React.FC = () => {
                 label="University Email"
                 type="email"
                 placeholder="e.g. student.alex@iudwas.edu"
-                icon={<Mail className="w-4 h-4" />}
+                icon={<Mail className="w-5 h-5" />}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -133,7 +133,7 @@ export const ForgotPasswordPage: React.FC = () => {
             to="/login"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-apple-blue hover:underline"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Login
           </Link>
         </div>
@@ -218,7 +218,7 @@ export const ResetPasswordPage: React.FC = () => {
               label="Recovery Code"
               type="text"
               placeholder="Paste the code from the reset request"
-              icon={<KeyRound className="w-4 h-4" />}
+              icon={<KeyRound className="w-5 h-5" />}
               value={resetToken}
               onChange={(e) => setResetToken(e.target.value)}
               required
@@ -265,7 +265,7 @@ export const ResetPasswordPage: React.FC = () => {
             to="/forgot-password"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-apple-blue hover:underline"
           >
-            <Mail className="w-3.5 h-3.5" />
+            <Mail className="w-4 h-4" />
             Request a Recovery Code
           </Link>
         </div>
@@ -275,7 +275,7 @@ export const ResetPasswordPage: React.FC = () => {
             to="/login"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-apple-blue hover:underline"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Login
           </Link>
         </div>

@@ -120,7 +120,7 @@ export const NotificationsPage: React.FC = () => {
             <AppleButton
               variant="primary"
               size="sm"
-              icon={<Send className="w-4 h-4" />}
+              icon={<Send className="w-5 h-5" />}
               onClick={() => setIsSendModalOpen(true)}
             >
               Send Notification
@@ -138,7 +138,7 @@ export const NotificationsPage: React.FC = () => {
           <AppleButton
             variant="secondary"
             size="sm"
-            icon={<CheckCheck className="w-4 h-4" />}
+            icon={<CheckCheck className="w-5 h-5" />}
             onClick={handleMarkAllRead}
             disabled={notifications.length === 0 || notifications.every((n) => n.is_read)}
           >
@@ -232,7 +232,7 @@ export const NotificationsPage: React.FC = () => {
 
                         {n.sender_signature && (
                           <div className="flex items-center gap-1.5 text-[10px] font-mono text-apple-blue bg-apple-blue/10 dark:bg-apple-blue/20 px-2 py-1 rounded-lg flex-shrink-0">
-                            <ShieldCheck className="w-3.5 h-3.5 text-apple-blue" />
+                            <ShieldCheck className="w-4 h-4 text-apple-blue" />
                             <span>Signed: {n.sender_signature}</span>
                           </div>
                         )}
@@ -252,13 +252,13 @@ export const NotificationsPage: React.FC = () => {
                   {!n.is_read && (
                     <button
                       onClick={(e) => handleMarkRead(n.notification_id, e)}
-                      className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
+                      className="p-2 rounded-lg text-neutral-400 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
                       title="Mark as read"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-5 h-5" />
                     </button>
                   )}
-                  <ArrowRight className="w-4 h-4 text-neutral-400" />
+                  <ArrowRight className="w-5 h-5 text-neutral-400" />
                 </div>
               </div>
             ))}

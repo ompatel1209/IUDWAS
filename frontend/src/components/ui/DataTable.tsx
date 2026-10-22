@@ -72,7 +72,7 @@ export function DataTable<T extends Record<string, any>>({
                   <th
                     key={idx}
                     aria-sort={sortable ? ariaSort : undefined}
-                    className={`px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 ${
+                    className={`px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 ${
                       sortable ? 'cursor-pointer select-none hover:text-neutral-900 dark:hover:text-white' : ''
                     } ${col.className || ''}`}
                     onClick={() => {
@@ -92,12 +92,12 @@ export function DataTable<T extends Record<string, any>>({
                         <span className="text-neutral-400" aria-hidden="true">
                           {isActive ? (
                             sortOrder === 'ASC' ? (
-                              <ArrowUp className="w-3.5 h-3.5 text-apple-blue" />
+                              <ArrowUp className="w-4 h-4 text-apple-blue" />
                             ) : (
-                              <ArrowDown className="w-3.5 h-3.5 text-apple-blue" />
+                              <ArrowDown className="w-4 h-4 text-apple-blue" />
                             )
                           ) : (
-                            <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />
+                            <ArrowUpDown className="w-4 h-4 opacity-40" />
                           )}
                         </span>
                       )}
@@ -154,7 +154,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => onPageChange(1)}
               disabled={page <= 1}
               aria-label="Go to first page"
-              icon={<ChevronsLeft className="w-3.5 h-3.5" />}
+              icon={<ChevronsLeft className="w-4 h-4" />}
             />
             <AppleButton
               variant="secondary"
@@ -162,7 +162,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
               aria-label="Go to previous page"
-              icon={<ChevronLeft className="w-3.5 h-3.5" />}
+              icon={<ChevronLeft className="w-4 h-4" />}
             />
             <span className="px-3 py-1 text-xs font-bold text-neutral-700 dark:text-neutral-200">
               Page {page} of {totalPages}
@@ -173,7 +173,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
               aria-label="Go to next page"
-              icon={<ChevronRight className="w-3.5 h-3.5" />}
+              icon={<ChevronRight className="w-4 h-4" />}
             />
             <AppleButton
               variant="secondary"
@@ -181,7 +181,7 @@ export function DataTable<T extends Record<string, any>>({
               onClick={() => onPageChange(totalPages)}
               disabled={page >= totalPages}
               aria-label="Go to last page"
-              icon={<ChevronsRight className="w-3.5 h-3.5" />}
+              icon={<ChevronsRight className="w-4 h-4" />}
             />
           </div>
         </div>

@@ -151,7 +151,7 @@ export const AdminDashboardPage: React.FC = () => {
         <AppleCard className="p-6 space-y-4 bg-gradient-to-r from-black/[0.02] to-black/[0.04] dark:from-white/[0.02] dark:to-white/[0.04]">
           <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Server className="w-4 h-4 text-apple-blue" />
+              <Server className="w-5 h-5 text-apple-blue" />
               Service Health & Infrastructure Telemetry
             </h3>
             <AppleBadge variant="blue" size="sm">
@@ -237,7 +237,7 @@ export const AdminDashboardPage: React.FC = () => {
         <AppleCard className="p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-apple-blue" />
+              <Users className="w-5 h-5 text-apple-blue" />
               Users by Role
             </h3>
             <button onClick={() => navigate('/admin/users')} className="text-xs text-apple-blue hover:underline">
@@ -274,7 +274,7 @@ export const AdminDashboardPage: React.FC = () => {
         <AppleCard className="p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Building className="w-4 h-4 text-apple-purple" />
+              <Building className="w-5 h-5 text-apple-purple" />
               Department Distribution
             </h3>
             <button onClick={() => navigate('/admin/departments')} className="text-xs text-apple-blue hover:underline">
@@ -300,7 +300,7 @@ export const AdminDashboardPage: React.FC = () => {
         <AppleCard className="p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-4 h-4 text-apple-teal" />
+              <FileText className="w-5 h-5 text-apple-teal" />
               Documents by Category
             </h3>
             <button onClick={() => navigate('/admin/categories-tags')} className="text-xs text-apple-blue hover:underline">
@@ -324,11 +324,11 @@ export const AdminDashboardPage: React.FC = () => {
       <AppleCard className="p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
           <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-            <History className="w-4 h-4 text-apple-red" />
+            <History className="w-5 h-5 text-apple-red" />
             Recent Security & Audit Trail
           </h3>
           <button onClick={() => navigate('/admin/audit')} className="text-xs font-semibold text-apple-blue hover:underline flex items-center gap-1">
-            Full Audit Logs <ArrowRight className="w-3.5 h-3.5" />
+            Full Audit Logs <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -336,8 +336,8 @@ export const AdminDashboardPage: React.FC = () => {
           {metrics?.recentAudit?.map((log: any) => (
             <div key={log.log_id} className="py-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10 text-neutral-500">
-                  <ShieldAlert className="w-3.5 h-3.5" />
+                <div className="p-2 rounded-lg bg-black/5 dark:bg-white/10 text-neutral-500">
+                  <ShieldAlert className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

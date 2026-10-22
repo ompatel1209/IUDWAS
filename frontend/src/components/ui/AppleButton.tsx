@@ -23,9 +23,9 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
     'inline-flex items-center justify-center font-semibold rounded-2xl apple-press focus:outline-none focus:ring-2 focus:ring-apple-blue/40 disabled:opacity-45 disabled:pointer-events-none disabled:cursor-not-allowed select-none transition-all duration-150';
 
   const sizeClasses = {
-    sm: 'px-3.5 py-1.5 text-xs gap-1.5 rounded-xl',
-    md: 'px-4.5 py-2 text-sm gap-2 rounded-2xl',
-    lg: 'px-6 py-3 text-base gap-2.5 rounded-2xl',
+    sm: 'px-4 py-2 text-[13px] gap-1.5 rounded-xl min-h-[36px]',
+    md: 'px-5 py-2.5 text-sm gap-2 rounded-2xl min-h-[44px]',
+    lg: 'px-7 py-3 text-base gap-2.5 rounded-2xl min-h-[50px]',
   }[size];
 
   const variantClasses = {
@@ -52,7 +52,7 @@ export const AppleButton: React.FC<AppleButtonProps> = ({
       {...props}
     >
       {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin text-current" />
+        <Loader2 className="w-5 h-5 animate-spin text-current" />
       ) : (
         icon && <span className="flex-shrink-0">{icon}</span>
       )}

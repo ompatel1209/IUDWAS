@@ -281,7 +281,7 @@ export const WorkflowsPage: React.FC = () => {
         <AppleButton
           variant="primary"
           size="md"
-          icon={<PlusCircle className="w-4 h-4" />}
+          icon={<PlusCircle className="w-5 h-5" />}
           onClick={() => setIsNewModalOpen(true)}
         >
           New Workflow Request
@@ -350,7 +350,7 @@ export const WorkflowsPage: React.FC = () => {
 
                     <div className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 space-y-1 text-xs">
                       <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-apple-blue" />
+                        <FileText className="w-4 h-4 text-apple-blue" />
                         <span className="font-semibold text-neutral-800 dark:text-neutral-200 truncate">{inst.document_title}</span>
                       </div>
                       <p className="text-neutral-500">Requester: <strong>{inst.submitter_name}</strong> ({inst.submitter_email})</p>
@@ -364,7 +364,7 @@ export const WorkflowsPage: React.FC = () => {
                     <AppleButton
                       variant="ghost"
                       size="sm"
-                      icon={<Eye className="w-3.5 h-3.5" />}
+                      icon={<Eye className="w-4 h-4" />}
                       onClick={() => openDetailModal(inst.instance_id)}
                     >
                       Inspect Timeline
@@ -374,7 +374,7 @@ export const WorkflowsPage: React.FC = () => {
                       <AppleButton
                         variant="ghost"
                         size="sm"
-                        icon={<UserCheck className="w-3.5 h-3.5" />}
+                        icon={<UserCheck className="w-4 h-4" />}
                         onClick={() => setActionModal({ type: 'delegate', instance: inst })}
                         disabled={usersList.length === 0}
                         title={usersList.length === 0 ? 'No colleagues available to delegate to' : 'Pass this request to another authorized approver'}
@@ -384,7 +384,7 @@ export const WorkflowsPage: React.FC = () => {
                       <AppleButton
                         variant="destructive"
                         size="sm"
-                        icon={<X className="w-3.5 h-3.5" />}
+                        icon={<X className="w-4 h-4" />}
                         onClick={() => setActionModal({ type: 'reject', instance: inst })}
                       >
                         Reject
@@ -392,7 +392,7 @@ export const WorkflowsPage: React.FC = () => {
                       <AppleButton
                         variant="primary"
                         size="sm"
-                        icon={<Check className="w-3.5 h-3.5" />}
+                        icon={<Check className="w-4 h-4" />}
                         onClick={() => setActionModal({ type: 'approve', instance: inst })}
                       >
                         Approve
@@ -416,7 +416,7 @@ export const WorkflowsPage: React.FC = () => {
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<PlusCircle className="w-3.5 h-3.5" />}
+                    icon={<PlusCircle className="w-4 h-4" />}
                     onClick={() => setIsNewModalOpen(true)}
                   >
                     Start First Request
@@ -444,7 +444,7 @@ export const WorkflowsPage: React.FC = () => {
                         </AppleBadge>
                       </div>
                       <p className="text-xs text-neutral-500 mt-1 flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-4 h-4" />
                         <span>Attached Doc: <strong>{inst.document_title}</strong></span>
                         <span>· Submitted: {new Date(inst.submitted_at).toLocaleDateString()}</span>
                       </p>
@@ -491,7 +491,7 @@ export const WorkflowsPage: React.FC = () => {
         onClose={() => setIsNewModalOpen(false)}
         title="Initialize New Workflow Request"
         subtitle="Select a university template and attach the required supporting document."
-        maxWidth="lg"
+        maxWidth="2xl"
         actions={
           <>
             <AppleButton variant="secondary" onClick={() => setIsNewModalOpen(false)} disabled={submitting}>
@@ -554,7 +554,7 @@ export const WorkflowsPage: React.FC = () => {
           onClose={() => setIsDetailModalOpen(false)}
           title={detailInstance.workflow_name || 'Workflow Instance'}
           subtitle={`Submitted by ${detailInstance.submitter_name} (${detailInstance.submitter_email}) on ${new Date(detailInstance.submitted_at).toLocaleString()}`}
-          maxWidth="3xl"
+          maxWidth="5xl"
           actions={
             <div className="flex items-center justify-between w-full">
               <AppleBadge variant={getStatusBadgeVariant(detailInstance.status) as any} size="md">
@@ -567,7 +567,7 @@ export const WorkflowsPage: React.FC = () => {
                     <AppleButton
                       variant="destructive"
                       size="sm"
-                      icon={<X className="w-3.5 h-3.5" />}
+                      icon={<X className="w-4 h-4" />}
                       onClick={() => setActionModal({ type: 'reject', instance: detailInstance })}
                     >
                       Reject
@@ -575,7 +575,7 @@ export const WorkflowsPage: React.FC = () => {
                     <AppleButton
                       variant="primary"
                       size="sm"
-                      icon={<Check className="w-3.5 h-3.5" />}
+                      icon={<Check className="w-4 h-4" />}
                       onClick={() => setActionModal({ type: 'approve', instance: detailInstance })}
                     >
                       Approve
@@ -620,7 +620,7 @@ export const WorkflowsPage: React.FC = () => {
               <AppleButton
                 variant="glass"
                 size="sm"
-                icon={<Download className="w-3.5 h-3.5" />}
+                icon={<Download className="w-4 h-4" />}
                 loading={downloadingDocId === detailInstance.document_id}
                 onClick={() =>
                   handleDetailDownload(
@@ -691,7 +691,7 @@ export const WorkflowsPage: React.FC = () => {
               : 'Delegate Workflow Approval'
           }
           subtitle={`Request: ${actionModal.instance.workflow_name}`}
-          maxWidth="md"
+          maxWidth="xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setActionModal(null)} disabled={actionLoading}>

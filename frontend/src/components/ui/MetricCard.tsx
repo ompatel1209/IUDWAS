@@ -41,7 +41,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
             {title}
           </p>
           <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-neutral-900 dark:text-white tracking-tight">

@@ -193,8 +193,8 @@ export const AIAssistantPage: React.FC = () => {
             {/* Context Selector Header */}
             <div className="p-3.5 border-b border-black/5 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01] flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-apple-purple/10 text-apple-purple">
-                  <Bot className="w-4 h-4" />
+                <div className="p-2 rounded-lg bg-apple-purple/10 text-apple-purple">
+                  <Bot className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-neutral-900 dark:text-white">
@@ -236,7 +236,7 @@ export const AIAssistantPage: React.FC = () => {
                         : 'bg-gradient-to-tr from-apple-blue to-apple-purple text-white shadow-sm'
                     }`}
                   >
-                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                   </div>
 
                   <div
@@ -269,7 +269,7 @@ export const AIAssistantPage: React.FC = () => {
               {chatLoading && (
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-apple-purple text-white flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
+                    <Bot className="w-5 h-5" />
                   </div>
                   <div className="glass-panel p-3 rounded-2xl text-xs text-neutral-500 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-apple-purple animate-ping" />
@@ -301,7 +301,7 @@ export const AIAssistantPage: React.FC = () => {
                   variant="primary"
                   size="md"
                   disabled={!chatInput.trim() || chatLoading}
-                  icon={<Send className="w-4 h-4" />}
+                  icon={<Send className="w-5 h-5" />}
                 >
                   Send
                 </AppleButton>
@@ -313,20 +313,20 @@ export const AIAssistantPage: React.FC = () => {
           <div className="lg:col-span-4 space-y-4">
             <AppleCard className="space-y-3 p-5">
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-apple-blue" />
+                <BookOpen className="w-5 h-5 text-apple-blue" />
                 Assistant Capabilities
               </h3>
               <ul className="text-xs text-neutral-600 dark:text-neutral-300 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
-                  <Check className="w-3.5 h-3.5 text-apple-green flex-shrink-0 mt-0.5" />
+                  <Check className="w-4 h-4 text-apple-green flex-shrink-0 mt-0.5" />
                   <span><strong>Grounded in University DB:</strong> Answers questions using uploaded transcripts, research grants, and syllabus files.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-3.5 h-3.5 text-apple-green flex-shrink-0 mt-0.5" />
+                  <Check className="w-4 h-4 text-apple-green flex-shrink-0 mt-0.5" />
                   <span><strong>SLA & Policy Guidance:</strong> Provides turnaround SLAs and prerequisite rules.</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="w-3.5 h-3.5 text-apple-green flex-shrink-0 mt-0.5" />
+                  <Check className="w-4 h-4 text-apple-green flex-shrink-0 mt-0.5" />
                   <span><strong>Role-Aware Responses:</strong> Customizes actions for Students, Faculty, and Administrators.</span>
                 </li>
               </ul>
@@ -349,7 +349,7 @@ export const AIAssistantPage: React.FC = () => {
                     className="w-full text-left p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-xs text-neutral-700 dark:text-neutral-300 transition-colors apple-press flex items-center justify-between"
                   >
                     <span className="truncate">{prompt}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-neutral-400 flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -460,7 +460,7 @@ export const AIAssistantPage: React.FC = () => {
             <form onSubmit={handleSemanticSearch} className="flex items-center gap-3">
               <AppleInput
                 placeholder="Search across all document text, transcripts, and proposals..."
-                icon={<Search className="w-4 h-4" />}
+                icon={<Search className="w-5 h-5" />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -496,7 +496,7 @@ export const AIAssistantPage: React.FC = () => {
                     <AppleButton
                       variant="glass"
                       size="sm"
-                      icon={<Download className="w-3.5 h-3.5" />}
+                      icon={<Download className="w-4 h-4" />}
                       loading={downloadingSearchDocId === item.document_id}
                       onClick={() => handleSearchResultDownload(item.document_id, item.title || 'document')}
                     >

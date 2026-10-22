@@ -67,7 +67,7 @@ export const LoginPage: React.FC = () => {
               label="University Email"
               type="email"
               placeholder="e.g. student.alex@iudwas.edu"
-              icon={<Mail className="w-4 h-4" />}
+              icon={<Mail className="w-5 h-5" />}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -78,7 +78,7 @@ export const LoginPage: React.FC = () => {
                 label="Password"
                 type="password"
                 placeholder="••••••••"
-                icon={<Lock className="w-4 h-4" />}
+                icon={<Lock className="w-5 h-5" />}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -116,7 +116,7 @@ export const LoginPage: React.FC = () => {
                   onClick={() => handleQuickDemo('admin@iudwas.edu')}
                   className="flex items-center gap-2 p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-apple-red text-xs font-semibold transition-colors apple-press"
                 >
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldCheck className="w-5 h-5" />
                   <span>Super Admin</span>
                 </button>
 
@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
                   onClick={() => handleQuickDemo('deptadmin.cs@iudwas.edu')}
                   className="flex items-center gap-2 p-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-apple-purple text-xs font-semibold transition-colors apple-press"
                 >
-                  <Briefcase className="w-4 h-4" />
+                  <Briefcase className="w-5 h-5" />
                   <span>Dept Admin</span>
                 </button>
 
@@ -134,7 +134,7 @@ export const LoginPage: React.FC = () => {
                   onClick={() => handleQuickDemo('faculty.smith@iudwas.edu')}
                   className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-apple-blue text-xs font-semibold transition-colors apple-press"
                 >
-                  <UserCheck className="w-4 h-4" />
+                  <UserCheck className="w-5 h-5" />
                   <span>Faculty</span>
                 </button>
 
@@ -143,7 +143,7 @@ export const LoginPage: React.FC = () => {
                   onClick={() => handleQuickDemo('student.alex@iudwas.edu')}
                   className="flex items-center gap-2 p-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-apple-teal text-xs font-semibold transition-colors apple-press"
                 >
-                  <GraduationCap className="w-4 h-4" />
+                  <GraduationCap className="w-5 h-5" />
                   <span>Student</span>
                 </button>
               </div>

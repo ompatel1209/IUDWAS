@@ -63,7 +63,7 @@ export const AdminSettingsPage: React.FC = () => {
         {/* Document Vault & Quota Policy */}
         <AppleCard className="p-6 space-y-4">
           <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-            <Database className="w-4 h-4 text-apple-blue" />
+            <Database className="w-5 h-5 text-apple-blue" />
             Document Vault Policies
           </h3>
 
@@ -91,7 +91,7 @@ export const AdminSettingsPage: React.FC = () => {
         {/* AI & Automation Policies */}
         <AppleCard className="p-6 space-y-4">
           <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-apple-purple" />
+            <Sparkles className="w-5 h-5 text-apple-purple" />
             AI Intelligence & OCR Automation
           </h3>
 
@@ -135,7 +135,7 @@ export const AdminSettingsPage: React.FC = () => {
         {/* Security & Maintenance */}
         <AppleCard className="p-6 space-y-4">
           <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-            <Shield className="w-4 h-4 text-apple-red" />
+            <Shield className="w-5 h-5 text-apple-red" />
             Security, Maintenance & Threat Mitigation
           </h3>
 
@@ -151,7 +151,7 @@ export const AdminSettingsPage: React.FC = () => {
         <AppleCard className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Shield className="w-4 h-4 text-apple-orange" />
+              <Shield className="w-5 h-5 text-apple-orange" />
               Rate Limiting & DDoS Shield Thresholds
             </h3>
             <AppleBadge variant="purple" size="sm">
@@ -225,7 +225,7 @@ export const AdminSettingsPage: React.FC = () => {
             type="submit"
             variant="primary"
             size="lg"
-            icon={<Save className="w-4 h-4" />}
+            icon={<Save className="w-5 h-5" />}
             loading={saving}
           >
             Save All Settings

@@ -202,7 +202,7 @@ export const AdminWorkflowsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-orange-500/10 text-apple-orange flex-shrink-0">
-            <CheckSquare className="w-4 h-4" />
+            <CheckSquare className="w-5 h-5" />
           </div>
           <div>
             <span className="font-semibold text-neutral-900 dark:text-white">{row.name}</span>
@@ -250,24 +250,24 @@ export const AdminWorkflowsPage: React.FC = () => {
         <div className="flex items-center gap-1.5 justify-end">
           <button
             onClick={() => openEditBuilder(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Design Workflow Steps"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleDuplicate(row.workflow_id)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
             title="Duplicate Template"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-5 h-5" />
           </button>
           <button
             onClick={() => setDeleteTarget(row)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete / Archive"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -290,7 +290,7 @@ export const AdminWorkflowsPage: React.FC = () => {
         <AppleButton
           variant="primary"
           size="md"
-          icon={<Plus className="w-4 h-4" />}
+          icon={<Plus className="w-5 h-5" />}
           onClick={openCreateBuilder}
         >
           Create Workflow Template
@@ -371,14 +371,14 @@ export const AdminWorkflowsPage: React.FC = () => {
             <div className="space-y-3 pt-4 border-t border-black/5 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-apple-blue" />
+                  <Layers className="w-5 h-5 text-apple-blue" />
                   Approval Chain Stages ({steps.length} Levels)
                 </h4>
                 <AppleButton
                   type="button"
                   variant="glass"
                   size="sm"
-                  icon={<Plus className="w-3.5 h-3.5" />}
+                  icon={<Plus className="w-4 h-4" />}
                   onClick={addStep}
                 >
                   Add Step
@@ -409,7 +409,7 @@ export const AdminWorkflowsPage: React.FC = () => {
                           className="p-1 rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-white disabled:opacity-30"
                           title="Move step earlier"
                         >
-                          <ArrowUp className="w-3.5 h-3.5" />
+                          <ArrowUp className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
@@ -418,7 +418,7 @@ export const AdminWorkflowsPage: React.FC = () => {
                           className="p-1 rounded text-neutral-400 hover:text-neutral-900 dark:hover:text-white disabled:opacity-30"
                           title="Move step later"
                         >
-                          <ArrowDown className="w-3.5 h-3.5" />
+                          <ArrowDown className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
@@ -426,7 +426,7 @@ export const AdminWorkflowsPage: React.FC = () => {
                           className="p-1 rounded text-neutral-400 hover:text-apple-red ml-1"
                           title="Remove stage"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

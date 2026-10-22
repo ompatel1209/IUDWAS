@@ -277,38 +277,38 @@ export const AdminUsersPage: React.FC = () => {
         <div className="flex items-center gap-1.5 justify-end">
           <button
             onClick={() => openEditModal(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Edit User Profile"
             aria-label={`Edit ${row.full_name}`}
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleToggleStatus(row)}
-            className={`p-1.5 rounded-lg ${row.is_active ? 'text-neutral-400 hover:text-apple-orange hover:bg-amber-500/10' : 'text-neutral-400 hover:text-apple-green hover:bg-emerald-500/10'}`}
+            className={`p-2 rounded-lg ${row.is_active ? 'text-neutral-400 hover:text-apple-orange hover:bg-amber-500/10' : 'text-neutral-400 hover:text-apple-green hover:bg-emerald-500/10'}`}
             title={row.is_active ? 'Deactivate User' : 'Activate User'}
             aria-label={row.is_active ? `Deactivate ${row.full_name}` : `Activate ${row.full_name}`}
           >
-            <Power className="w-4 h-4" />
+            <Power className="w-5 h-5" />
           </button>
           <button
             onClick={() => {
               setResetPasswordUser(row);
               setNewPassword('');
             }}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-purple hover:bg-purple-500/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-apple-purple hover:bg-purple-500/10"
             title="Admin Reset Password"
             aria-label={`Reset password for ${row.full_name}`}
           >
-            <KeyRound className="w-4 h-4" />
+            <KeyRound className="w-5 h-5" />
           </button>
           <button
             onClick={() => setDeleteTargetUser(row)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete / Safe Deactivate"
             aria-label={`Delete ${row.full_name}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -333,7 +333,7 @@ export const AdminUsersPage: React.FC = () => {
           <AppleButton
             variant="glass"
             size="md"
-            icon={<Download className="w-4 h-4" />}
+            icon={<Download className="w-5 h-5" />}
             loading={exporting}
             onClick={async () => {
               if (exporting) return;
@@ -353,7 +353,7 @@ export const AdminUsersPage: React.FC = () => {
           <AppleButton
             variant="primary"
             size="md"
-            icon={<UserPlus className="w-4 h-4" />}
+            icon={<UserPlus className="w-5 h-5" />}
             onClick={() => setIsCreateModalOpen(true)}
           >
             Add New User
@@ -367,7 +367,7 @@ export const AdminUsersPage: React.FC = () => {
           <div className="lg:col-span-4">
             <AppleInput
               placeholder="Search by name, email, or employee ID..."
-              icon={<Search className="w-4 h-4" />}
+              icon={<Search className="w-5 h-5" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -432,7 +432,7 @@ export const AdminUsersPage: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         title="Provision New University Account"
         subtitle="Create an authenticated user profile with assigned RBAC permissions."
-        maxWidth="lg"
+        maxWidth="2xl"
         actions={
           <>
             <AppleButton variant="secondary" onClick={() => setIsCreateModalOpen(false)} disabled={saving}>
@@ -515,7 +515,7 @@ export const AdminUsersPage: React.FC = () => {
           onClose={() => setEditingUser(null)}
           title={`Edit User: ${editingUser.full_name}`}
           subtitle="Update user details, departmental affiliation, and security status."
-          maxWidth="lg"
+          maxWidth="2xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setEditingUser(null)} disabled={saving}>
@@ -632,7 +632,7 @@ export const AdminUsersPage: React.FC = () => {
           onClose={() => setResetPasswordUser(null)}
           title={`Reset Password for ${resetPasswordUser.full_name}`}
           subtitle={`Account: ${resetPasswordUser.email}`}
-          maxWidth="md"
+          maxWidth="xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setResetPasswordUser(null)} disabled={saving}>

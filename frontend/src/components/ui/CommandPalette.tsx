@@ -70,21 +70,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   const quickNav = [
-    { label: 'User Dashboard', path: '/dashboard', icon: <FileText className="w-4 h-4 text-apple-blue" /> },
-    { label: 'Document Explorer', path: '/documents', icon: <FileText className="w-4 h-4 text-apple-purple" /> },
-    { label: 'Workflows & Requests', path: '/workflows', icon: <GitPullRequest className="w-4 h-4 text-apple-orange" /> },
-    { label: 'AI Document Assistant', path: '/ai-assistant', icon: <Bot className="w-4 h-4 text-apple-teal" /> },
+    { label: 'User Dashboard', path: '/dashboard', icon: <FileText className="w-5 h-5 text-apple-blue" /> },
+    { label: 'Document Explorer', path: '/documents', icon: <FileText className="w-5 h-5 text-apple-purple" /> },
+    { label: 'Workflows & Requests', path: '/workflows', icon: <GitPullRequest className="w-5 h-5 text-apple-orange" /> },
+    { label: 'AI Document Assistant', path: '/ai-assistant', icon: <Bot className="w-5 h-5 text-apple-teal" /> },
   ];
 
   if (user?.role === 'SUPER_ADMIN' || user?.role === 'DEPT_ADMIN') {
     quickNav.push(
-      { label: 'Admin Dashboard', path: '/admin', icon: <Shield className="w-4 h-4 text-apple-red" /> },
-      { label: 'Manage Users', path: '/admin/users', icon: <Users className="w-4 h-4 text-apple-blue" /> },
-      { label: 'Manage Departments', path: '/admin/departments', icon: <Building className="w-4 h-4 text-apple-green" /> },
+      { label: 'Admin Dashboard', path: '/admin', icon: <Shield className="w-5 h-5 text-apple-red" /> },
+      { label: 'Manage Users', path: '/admin/users', icon: <Users className="w-5 h-5 text-apple-blue" /> },
+      { label: 'Manage Departments', path: '/admin/departments', icon: <Building className="w-5 h-5 text-apple-green" /> },
     );
     // System Settings is Super-Admin-only (matches the RoleGuard in App.tsx)
     if (user.role === 'SUPER_ADMIN') {
-      quickNav.push({ label: 'System Settings', path: '/admin/settings', icon: <Settings className="w-4 h-4 text-neutral-400" /> });
+      quickNav.push({ label: 'System Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5 text-neutral-400" /> });
     }
   }
 
@@ -151,7 +151,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                   >
                     <div className="flex items-start gap-3">
                       <div className="p-2 rounded-xl bg-apple-blue/10 text-apple-blue mt-0.5">
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-5 h-5" />
                       </div>
                       <div>
                         <h5 className="text-sm font-semibold text-neutral-900 dark:text-white">
@@ -162,7 +162,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                         </p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-neutral-400 flex-shrink-0 mt-1" />
+                    <ArrowRight className="w-5 h-5 text-neutral-400 flex-shrink-0 mt-1" />
                   </button>
                 ))}
               </div>
@@ -192,12 +192,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                   className="flex items-center justify-between p-3 rounded-2xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors apple-press text-left"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10">{item.icon}</div>
+                    <div className="p-2 rounded-lg bg-black/5 dark:bg-white/10">{item.icon}</div>
                     <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                       {item.label}
                     </span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                  <ArrowRight className="w-4 h-4 text-neutral-400" />
                 </button>
               ))}
             </div>

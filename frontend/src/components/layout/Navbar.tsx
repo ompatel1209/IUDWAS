@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
           className="hidden md:flex items-center justify-between gap-6 px-3.5 py-1.5 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/5 dark:border-white/5 text-xs text-neutral-500 dark:text-neutral-400 transition-colors w-72 apple-press"
         >
           <span className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-4 h-4" />
             <span>Spotlight Search...</span>
           </span>
           <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-black/40 rounded border border-black/10 dark:border-white/10">
@@ -144,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-apple-red text-white text-[10px] font-bold flex items-center justify-center shadow-sm animate-pulse">
+              <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-apple-red text-white text-[10px] font-bold flex items-center justify-center shadow-sm animate-pulse">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -204,7 +204,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                       <p className="text-xs font-semibold text-neutral-900 dark:text-white truncate">
                         {user?.full_name}
                       </p>
-                      <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                         {user?.email}
                       </p>
                       {user?.department_name && (
@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                   >
-                    <Camera className="w-4 h-4 text-apple-blue" />
+                    <Camera className="w-5 h-5 text-apple-blue" />
                     <span>Profile Photo & Account</span>
                   </button>
 
@@ -233,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                   >
-                    <UserIcon className="w-4 h-4 text-neutral-400" />
+                    <UserIcon className="w-5 h-5 text-neutral-400" />
                     <span>My Dashboard</span>
                   </button>
 
@@ -245,7 +245,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                     >
-                      <Shield className="w-4 h-4 text-apple-red" />
+                      <Shield className="w-5 h-5 text-apple-red" />
                       <span>Admin Control Center</span>
                     </button>
                   )}
@@ -255,7 +255,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-apple-red hover:bg-red-500/10 transition-colors"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-5 h-5" />
                       <span>Sign Out</span>
                     </button>
                   </div>

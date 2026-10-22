@@ -220,7 +220,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 className="absolute bottom-0 right-0 p-2.5 rounded-full bg-apple-blue text-white shadow-lg hover:bg-blue-600 apple-press transition-colors border-2 border-white dark:border-[#1C1C1E]"
                 title="Change Photo"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-5 h-5" />
               </button>
             </div>
 
@@ -263,7 +263,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<Camera className="w-4 h-4" />}
+                    icon={<Camera className="w-5 h-5" />}
                     onClick={handleUploadPhoto}
                     loading={photoUploading}
                   >
@@ -275,7 +275,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <AppleButton
                     variant="primary"
                     size="sm"
-                    icon={<Camera className="w-4 h-4" />}
+                    icon={<Camera className="w-5 h-5" />}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     Choose Photo
@@ -296,7 +296,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <AppleButton
                         variant="destructive"
                         size="sm"
-                        icon={<Trash2 className="w-4 h-4" />}
+                        icon={<Trash2 className="w-5 h-5" />}
                         onClick={handleDeletePhoto}
                         loading={photoUploading}
                       >
@@ -333,7 +333,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
             <AppleInput
               label="Full Legal Name *"
-              icon={<User className="w-4 h-4" />}
+              icon={<User className="w-5 h-5" />}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -342,7 +342,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <AppleInput
               label="University Email Address *"
               type="email"
-              icon={<Mail className="w-4 h-4" />}
+              icon={<Mail className="w-5 h-5" />}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -372,7 +372,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               label="Current Password *"
               type="password"
               placeholder="••••••••"
-              icon={<KeyRound className="w-4 h-4" />}
+              icon={<KeyRound className="w-5 h-5" />}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -382,7 +382,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               label="New Password (min 6 characters) *"
               type="password"
               placeholder="••••••••"
-              icon={<Lock className="w-4 h-4" />}
+              icon={<Lock className="w-5 h-5" />}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -392,7 +392,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               label="Confirm New Password *"
               type="password"
               placeholder="••••••••"
-              icon={<Lock className="w-4 h-4" />}
+              icon={<Lock className="w-5 h-5" />}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required

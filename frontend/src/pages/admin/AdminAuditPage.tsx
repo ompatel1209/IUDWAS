@@ -108,11 +108,11 @@ export const AdminAuditPage: React.FC = () => {
         <div className="flex justify-end">
           <button
             onClick={() => setSelectedLog(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
             title="Inspect Metadata Payload"
             aria-label="Inspect metadata payload"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -142,7 +142,7 @@ export const AdminAuditPage: React.FC = () => {
           <div className="sm:col-span-8">
             <AppleInput
               placeholder="Search by user email or ID..."
-              icon={<Search className="w-4 h-4" />}
+              icon={<Search className="w-5 h-5" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && loadData()}
@@ -186,7 +186,7 @@ export const AdminAuditPage: React.FC = () => {
           onClose={() => setSelectedLog(null)}
           title={`Audit Event: ${selectedLog.action}`}
           subtitle={`Event ID: ${selectedLog.log_id} · Recorded at ${new Date(selectedLog.created_at).toLocaleString()}`}
-          maxWidth="2xl"
+          maxWidth="3xl"
           actions={
             <AppleButton variant="secondary" onClick={() => setSelectedLog(null)}>
               Close
@@ -210,7 +210,7 @@ export const AdminAuditPage: React.FC = () => {
 
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-apple-blue" />
+                <Code2 className="w-4 h-4 text-apple-blue" />
                 Raw Event Payload (JSON)
               </h4>
               <div className="p-4 rounded-2xl bg-black/[0.04] dark:bg-black/50 border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed">

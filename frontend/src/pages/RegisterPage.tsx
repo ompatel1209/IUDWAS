@@ -87,7 +87,7 @@ export const RegisterPage: React.FC = () => {
             <AppleInput
               label="Full Name *"
               placeholder="e.g. Jane Doe"
-              icon={<User className="w-4 h-4" />}
+              icon={<User className="w-5 h-5" />}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
@@ -97,7 +97,7 @@ export const RegisterPage: React.FC = () => {
               label="University Email *"
               type="email"
               placeholder="e.g. j.doe@iudwas.edu"
-              icon={<Mail className="w-4 h-4" />}
+              icon={<Mail className="w-5 h-5" />}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -107,7 +107,7 @@ export const RegisterPage: React.FC = () => {
               label="Password (at least 6 characters) *"
               type="password"
               placeholder="••••••••"
-              icon={<Lock className="w-4 h-4" />}
+              icon={<Lock className="w-5 h-5" />}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -140,7 +140,7 @@ export const RegisterPage: React.FC = () => {
             <AppleInput
               label="Student / Employee ID"
               placeholder="e.g. STU-2026-0099"
-              icon={<IdCard className="w-4 h-4" />}
+              icon={<IdCard className="w-5 h-5" />}
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
             />

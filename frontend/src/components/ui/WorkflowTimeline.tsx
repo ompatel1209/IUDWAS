@@ -46,9 +46,9 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
           }[stepState];
 
           const icons = {
-            completed: <Check className="w-3.5 h-3.5" />,
-            current: <Clock className="w-3.5 h-3.5" />,
-            rejected: <XCircle className="w-3.5 h-3.5" />,
+            completed: <Check className="w-4 h-4" />,
+            current: <Clock className="w-4 h-4" />,
+            rejected: <XCircle className="w-4 h-4" />,
             pending: <span className="text-xs font-semibold">{step.step_order}</span>,
           }[stepState];
 

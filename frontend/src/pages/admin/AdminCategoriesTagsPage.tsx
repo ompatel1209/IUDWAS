@@ -121,7 +121,7 @@ export const AdminCategoriesTagsPage: React.FC = () => {
       accessorKey: 'name',
       cell: (row) => (
         <div className="flex items-center gap-2.5">
-          <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: row.color }} />
+          <span className="w-4 h-4 rounded-full" style={{ backgroundColor: row.color }} />
           <span className="font-semibold text-neutral-900 dark:text-white">{row.name}</span>
         </div>
       ),
@@ -136,7 +136,7 @@ export const AdminCategoriesTagsPage: React.FC = () => {
       accessorKey: 'document_count',
       cell: (row) => (
         <span className="text-xs text-neutral-600 dark:text-neutral-400 flex items-center gap-1">
-          <FileText className="w-3.5 h-3.5" />
+          <FileText className="w-4 h-4" />
           <span>{row.document_count || 0}</span>
         </span>
       ),
@@ -160,15 +160,15 @@ export const AdminCategoriesTagsPage: React.FC = () => {
               setCatForm({ name: row.name, code: row.code, color: row.color, is_active: row.is_active });
               setIsCategoryModalOpen(true);
             }}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => setDeleteTarget({ type: 'category', item: row })}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -205,15 +205,15 @@ export const AdminCategoriesTagsPage: React.FC = () => {
               setTagForm({ name: row.name, color: row.color });
               setIsTagModalOpen(true);
             }}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </button>
           <button
             onClick={() => setDeleteTarget({ type: 'tag', item: row })}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -246,7 +246,7 @@ export const AdminCategoriesTagsPage: React.FC = () => {
           <AppleButton
             variant="primary"
             size="md"
-            icon={<Plus className="w-4 h-4" />}
+            icon={<Plus className="w-5 h-5" />}
             onClick={() => {
               if (activeTab === 'categories') {
                 setEditingCategory(null);

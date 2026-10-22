@@ -55,7 +55,7 @@ export const ToastContainer: React.FC = () => {
               aria-label="Dismiss notification"
               className="w-6 h-6 rounded-full hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors p-1"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         );

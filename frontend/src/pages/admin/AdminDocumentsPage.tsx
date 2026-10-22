@@ -143,14 +143,14 @@ export const AdminDocumentsPage: React.FC = () => {
       cell: (row) => (
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-apple-blue/10 text-apple-blue flex-shrink-0">
-            <FileText className="w-4 h-4" />
+            <FileText className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-neutral-900 dark:text-white cursor-pointer hover:text-apple-blue" onClick={() => openDocDetails(row)}>
                 {row.title}
               </span>
-              {row.is_confidential && <Lock className="w-3.5 h-3.5 text-apple-purple" />}
+              {row.is_confidential && <Lock className="w-4 h-4 text-apple-purple" />}
             </div>
             <p className="text-xs text-neutral-400 mt-0.5">{row.file_name} · {(row.file_size / 1024).toFixed(0)} KB</p>
           </div>
@@ -212,27 +212,27 @@ export const AdminDocumentsPage: React.FC = () => {
         <div className="flex items-center gap-1.5 justify-end">
           <button
             onClick={() => openDocDetails(row)}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Inspect OCR & Versions"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleDownload(row.document_id, row.file_name || row.title || 'document')}
             disabled={downloadingId === row.document_id}
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+            className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
             title="Download Original"
             aria-label={`Download ${row.title || 'document'}`}
           >
-            <Download className={`w-4 h-4 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
+            <Download className={`w-5 h-5 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
           </button>
           <button
             onClick={() => handleDeleteRequest(row)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
+            className="p-2 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete Document"
             aria-label={`Delete ${row.title || 'document'}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       ),
@@ -256,7 +256,7 @@ export const AdminDocumentsPage: React.FC = () => {
           <div className="lg:col-span-4">
             <AppleInput
               placeholder="Search documents and OCR text..."
-              icon={<Search className="w-4 h-4" />}
+              icon={<Search className="w-5 h-5" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -322,7 +322,7 @@ export const AdminDocumentsPage: React.FC = () => {
           onClose={() => setIsDetailModalOpen(false)}
           title={`Admin Audit: ${selectedDoc.title}`}
           subtitle={`Document ID: ${selectedDoc.document_id} · Uploaded by ${selectedDoc.uploader_name} (${selectedDoc.uploader_email})`}
-          maxWidth="3xl"
+          maxWidth="4xl"
           actions={
             <div className="flex items-center justify-between w-full">
               <AppleBadge variant={selectedDoc.is_confidential ? 'red' : 'green'} size="md">
@@ -332,7 +332,7 @@ export const AdminDocumentsPage: React.FC = () => {
                 <AppleButton
                   variant="primary"
                   size="sm"
-                  icon={<Download className="w-4 h-4" />}
+                  icon={<Download className="w-5 h-5" />}
                   loading={downloadingId === selectedDoc.document_id}
                   onClick={() =>
                     handleDownload(
@@ -355,7 +355,7 @@ export const AdminDocumentsPage: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-apple-purple" />
+                  <Sparkles className="w-4 h-4 text-apple-purple" />
                   AI OCR Extracted Content
                 </h4>
                 <AppleBadge variant="teal" size="sm">OCR Extracted</AppleBadge>
@@ -368,7 +368,7 @@ export const AdminDocumentsPage: React.FC = () => {
             {/* Version List */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5 text-apple-blue" />
+                <History className="w-4 h-4 text-apple-blue" />
                 Immutable Version History
               </h4>
               <div className="divide-y divide-black/5 dark:divide-white/5 border border-black/5 dark:border-white/5 rounded-2xl overflow-hidden text-xs">
@@ -384,11 +384,11 @@ export const AdminDocumentsPage: React.FC = () => {
                     <button
                       onClick={() => handleDownloadVersion(selectedDoc.document_id, v.version_number)}
                       disabled={downloadingId === selectedDoc.document_id}
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+                      className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
                       title="Download this version"
                       aria-label={`Download version ${v.version_number}`}
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-5 h-5" />
                     </button>
                   </div>
                 ))}

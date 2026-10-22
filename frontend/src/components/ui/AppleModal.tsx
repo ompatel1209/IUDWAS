@@ -106,15 +106,19 @@ export const AppleModal: React.FC<AppleModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Responsive width ladder: each tier starts smaller on phones/laptops and
+  // grows to use the available window width on large screens, so dialogs with
+  // dense content (workflow timelines, version history, forms) never look
+  // postage-stamped on a desktop monitor.
   const maxWidthClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    '3xl': 'max-w-3xl',
-    '4xl': 'max-w-4xl',
-    '5xl': 'max-w-5xl',
+    sm: 'w-full sm:max-w-sm',
+    md: 'w-full sm:max-w-md',
+    lg: 'w-full sm:max-w-lg md:max-w-2xl',
+    xl: 'w-full sm:max-w-xl md:max-w-3xl',
+    '2xl': 'w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl',
+    '3xl': 'w-full sm:max-w-2xl md:max-w-3xl lg:max-w-5xl',
+    '4xl': 'w-full sm:max-w-3xl md:max-w-4xl lg:max-w-6xl',
+    '5xl': 'w-full sm:max-w-3xl md:max-w-5xl lg:max-w-6xl',
   }[maxWidth];
 
   return (
@@ -155,7 +159,7 @@ export const AppleModal: React.FC<AppleModalProps> = ({
             aria-label="Close dialog"
             className="w-8 h-8 rounded-full bg-[#767680]/15 hover:bg-[#767680]/25 flex items-center justify-center text-neutral-600 dark:text-neutral-300 transition-colors apple-press flex-shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
