@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLiveEvents } from '../context/LiveUpdatesContext';
+import { FilePreviewModal } from '../components/ui/FilePreviewModal';
 import { api, downloadWithAuth } from '../services/api';
 import { WorkflowTemplate, WorkflowInstance, DocumentItem, User } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
@@ -29,12 +31,18 @@ import {
   Eye,
   ArrowRight,
   Download,
+  Upload,
 } from 'lucide-react';
 
 export const WorkflowsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, isFaculty, isDeptAdmin, isAdmin } = useAuth();
   const { showToast, celebrate } = useToast();
+
+  // Live updates: refresh requests + approvals + doc picker when anything changes
+  useLiveEvents(['workflow:changed', 'document:changed'], () => {
+    void loadData();
+  });
 
   const [activeTab, setActiveTab] = useState<'my_requests' | 'approvals'>('my_requests');
   const [instances, setInstances] = useState<WorkflowInstance[]>([]);
@@ -50,6 +58,13 @@ export const WorkflowsPage: React.FC = () => {
   const [selectedDocId, setSelectedDocId] = useState('');
   const [requestComments, setRequestComments] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Inline document upload inside the workflow request modal
+  const wfFileInputRef = useRef<HTMLInputElement>(null);
+  const [wfUploading, setWfUploading] = useState(false);
+  const [wfFileName, setWfFileName] = useState<string | null>(null);
+  // In-app PDF preview of a request's attached document
+  const [previewTarget, setPreviewTarget] = useState<{ documentId: string; title: string; fileName: string | null } | null>(null);
 
   // Action (Approve / Reject / Delegate) Modal
   const [actionModal, setActionModal] = useState<{ type: 'approve' | 'reject' | 'delegate'; instance: WorkflowInstance } | null>(null);
@@ -158,10 +173,40 @@ export const WorkflowsPage: React.FC = () => {
     loadData();
   }, [user]);
 
+  // Upload a document straight from the workflow modal, then auto-attach it.
+  // This is the fix for "uploaded in workflow but not in the vault/picker":
+  // the file goes through the regular /documents/upload pipeline (so it lands
+  // in the vault immediately) and is selected for submission automatically.
+  const handleWorkflowFileSelect = async (file: File) => {
+    if (!file) return;
+    setWfUploading(true);
+    setWfFileName(file.name);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
+      formData.append('is_confidential', 'false');
+      formData.append('change_description', 'Uploaded for workflow request');
+
+      const res: any = await api.documents.upload(formData);
+      const created = res.data;
+      // Put it at the top of the picker right away (vault picks it up via its own list refresh)
+      setMyDocuments((prev) => [created, ...prev]);
+      setSelectedDocId(created.document_id);
+      showToast('success', 'Document Uploaded', `"${created.title}" is now attached to this request.`);
+    } catch (err: any) {
+      showToast('error', 'Upload Failed', err.message);
+      setWfFileName(null);
+      if (wfFileInputRef.current) wfFileInputRef.current.value = '';
+    } finally {
+      setWfUploading(false);
+    }
+  };
+
   const handleStartWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTemplateId || !selectedDocId) {
-      showToast('warning', 'Incomplete Form', 'Please select a workflow template and an attached document');
+      showToast('warning', 'Incomplete Form', 'Please select a workflow template and attach a document — tip: you can upload one right below the dropdown.');
       return;
     }
 
@@ -186,8 +231,19 @@ export const WorkflowsPage: React.FC = () => {
     }
   };
 
-  const openDetailModal = async (instanceId: string) => {
-    try {
+  // Refresh the document picker every time the request modal opens, so newly
+  // uploaded documents always appear without needing a full page reload
+  useEffect(() => {
+    if (!isNewModalOpen) return;
+    api.documents
+      .list({ limit: 100 })
+      .then((res) => setMyDocuments(res.data))
+      .catch(() => {
+        // keep the previous list; the picker still shows what it has
+      });
+  }, [isNewModalOpen]);
+
+  const openDetailModal = async (instanceId: string) => {    try {
       const res = await api.workflowInstances.get(instanceId);
       setDetailInstance(res.data);
       setIsDetailModalOpen(true);
@@ -532,6 +588,48 @@ export const WorkflowsPage: React.FC = () => {
             ))}
           </AppleSelect>
 
+          {/* Inline upload: send a brand-new document without leaving the modal.
+              It is stored through the regular upload pipeline, appears at the
+              top of the vault, and is auto-attached to this request. */}
+          <div className="rounded-2xl border border-dashed border-black/15 dark:border-white/15 bg-black/[0.02] dark:bg-white/[0.03] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200">
+                  Need to attach something new?
+                </p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  Upload a document right here — it is saved to the Document vault and attached automatically.
+                </p>
+              </div>
+              <AppleButton
+                variant="tinted"
+                size="sm"
+                icon={<Upload className="w-4 h-4" />}
+                loading={wfUploading}
+                onClick={() => wfFileInputRef.current?.click()}
+              >
+                Upload File
+              </AppleButton>
+            </div>
+            {wfUploading && (
+              <p className="mt-2 text-xs text-apple-blue animate-pulse">Uploading "{wfFileName}"…</p>
+            )}
+            {!wfUploading && wfFileName && (
+              <p className="mt-2 text-xs text-apple-green font-medium">Uploaded &amp; attached: {wfFileName}</p>
+            )}
+            <input
+              ref={wfFileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = ''; // allow re-picking the same file
+                if (file) handleWorkflowFileSelect(file);
+              }}
+            />
+          </div>
+
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-600 dark:text-neutral-300">
               Requester Notes / Justification
@@ -621,13 +719,14 @@ export const WorkflowsPage: React.FC = () => {
                 variant="glass"
                 size="sm"
                 icon={<Download className="w-4 h-4" />}
-                loading={downloadingDocId === detailInstance.document_id}
-                onClick={() =>
-                  handleDetailDownload(
-                    detailInstance.document_id,
-                    detailInstance.file_name || detailInstance.document_title || 'document'
-                  )
-                }
+                onClick={() => {
+                  if (!detailInstance.document_id) return;
+                  setPreviewTarget({
+                    documentId: detailInstance.document_id,
+                    title: detailInstance.document_title || 'Attached Document',
+                    fileName: detailInstance.file_name || null,
+                  });
+                }}
               >
                 View Document
               </AppleButton>
@@ -691,7 +790,7 @@ export const WorkflowsPage: React.FC = () => {
               : 'Delegate Workflow Approval'
           }
           subtitle={`Request: ${actionModal.instance.workflow_name}`}
-          maxWidth="xl"
+          maxWidth="2xl"
           actions={
             <>
               <AppleButton variant="secondary" onClick={() => setActionModal(null)} disabled={actionLoading}>
@@ -745,6 +844,17 @@ export const WorkflowsPage: React.FC = () => {
             </div>
           </div>
         </AppleModal>
+      )}
+
+      {/* In-app document preview for the request's attached file */}
+      {previewTarget && (
+        <FilePreviewModal
+          isOpen
+          onClose={() => setPreviewTarget(null)}
+          documentId={previewTarget.documentId}
+          title={previewTarget.title}
+          fileName={previewTarget.fileName}
+        />
       )}
     </div>
   );

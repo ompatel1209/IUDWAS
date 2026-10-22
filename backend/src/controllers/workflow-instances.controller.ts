@@ -39,6 +39,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/database';
 import { sendSuccess, sendError } from '../utils/response';
+import { publishLiveEvent } from '../services/live-events.service';
 import { recordAuditLog } from '../middleware/audit.middleware';
 import { UserRole } from '../types';
 
@@ -156,6 +157,7 @@ export class WorkflowInstancesController {
         WHERE wi.instance_id = ?
       `).get(instanceId);
 
+      publishLiveEvent('workflow:changed', { resource: 'workflow_instance', id: instanceId, actor_user_id: user.userId });
       sendSuccess(res, created, undefined, 201);
     } catch (err: any) {
       sendError(res, 'WORKFLOW_START_ERROR', err.message, 500);
@@ -468,6 +470,7 @@ export class WorkflowInstancesController {
       });
 
       const updated = db.prepare('SELECT * FROM workflow_instances WHERE instance_id = ?').get(id);
+      publishLiveEvent('workflow:changed', { resource: 'workflow_instance', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, updated);
     } catch (err: any) {
       sendError(res, 'APPROVE_ERROR', err.message, 500);
@@ -539,6 +542,7 @@ export class WorkflowInstancesController {
       });
 
       const updated = db.prepare('SELECT * FROM workflow_instances WHERE instance_id = ?').get(id);
+      publishLiveEvent('workflow:changed', { resource: 'workflow_instance', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, updated);
     } catch (err: any) {
       sendError(res, 'REJECT_ERROR', err.message, 500);
@@ -604,6 +608,7 @@ export class WorkflowInstancesController {
         comments,
       });
 
+      publishLiveEvent('workflow:changed', { resource: 'workflow_instance', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, { message: `Workflow step delegated successfully to ${delegateUser.full_name}` });
     } catch (err: any) {
       sendError(res, 'DELEGATE_ERROR', err.message, 500);

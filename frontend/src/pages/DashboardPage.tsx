@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLiveEvents } from '../context/LiveUpdatesContext';
 import { api } from '../services/api';
 import { DocumentItem, WorkflowInstance } from '../types';
 import { MetricCard } from '../components/ui/MetricCard';
@@ -37,6 +38,11 @@ import { SendNotificationModal } from '../components/ui/SendNotificationModal';
 export const DashboardPage: React.FC = () => {
   const { user, isFaculty, isDeptAdmin, isAdmin } = useAuth();
   const { showToast, celebrate } = useToast();
+
+  // Live updates: dashboard KPIs and latest activity refresh themselves
+  useLiveEvents(['workflow:changed', 'document:changed', 'notification:changed'], () => {
+    void loadDashboardData();
+  });
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);

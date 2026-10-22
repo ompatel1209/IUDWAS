@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api, downloadWithAuth } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { useLiveEvents } from '../../context/LiveUpdatesContext';
+import { FilePreviewModal } from '../../components/ui/FilePreviewModal';
 import { DocumentItem, DocCategory, Department, DocumentVersion } from '../../types';
 import { AppleCard } from '../../components/ui/AppleCard';
 import { AppleButton } from '../../components/ui/AppleButton';
@@ -10,14 +12,20 @@ import { AppleBadge } from '../../components/ui/AppleBadge';
 import { AppleModal } from '../../components/ui/AppleModal';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { FileText, Search, Download, Trash2, Eye, Lock, History, Sparkles } from 'lucide-react';
+import { FileText, Search, Download, Trash2, Eye, Lock, History, Sparkles, BookOpen } from 'lucide-react';
 
 export const AdminDocumentsPage: React.FC = () => {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
   const [categories, setCategories] = useState<DocCategory[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+
+  // Live updates: admin vault reflects uploads/archives from every session
+  useLiveEvents(['document:changed'], () => {
+    void loadData();
+  });
 
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -210,6 +218,14 @@ export const AdminDocumentsPage: React.FC = () => {
       header: 'Actions',
       cell: (row) => (
         <div className="flex items-center gap-1.5 justify-end">
+          <button
+            onClick={() => setPreviewDoc(row)}
+            className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-blue-500/10"
+            title="Preview file in browser"
+            aria-label={`Preview ${row.title || 'document'}`}
+          >
+            <BookOpen className="w-5 h-5" />
+          </button>
           <button
             onClick={() => openDocDetails(row)}
             className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
@@ -409,6 +425,17 @@ export const AdminDocumentsPage: React.FC = () => {
         destructive
         loading={deleting}
       />
+
+      {/* In-app document preview (PDF viewer / image viewer) */}
+      {previewDoc && (
+        <FilePreviewModal
+          isOpen
+          onClose={() => setPreviewDoc(null)}
+          documentId={previewDoc.document_id}
+          title={previewDoc.title}
+          fileName={previewDoc.file_name}
+        />
+      )}
     </div>
   );
 };

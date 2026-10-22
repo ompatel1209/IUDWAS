@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface AppleModalProps {
@@ -32,7 +33,15 @@ const unlockBodyScroll = () => {
   }
 };
 
-export const AppleModal: React.FC<AppleModalProps> = ({
+/**
+ * Global window stack. Every open modal registers itself; Escape closes ONLY
+ * the topmost window, and each window sits at a higher z-index than the one
+ * beneath it — so approval/confirm dialogs that open on top of detail dialogs
+ * stack cleanly instead of fighting over the same layer.
+ */
+const modalStack: string[] = [];
+
+const AppleModal: React.FC<AppleModalProps> = ({
   isOpen,
   onClose,
   title,
@@ -44,6 +53,7 @@ export const AppleModal: React.FC<AppleModalProps> = ({
   const titleId = useRef(`apple-modal-title-${Math.random().toString(36).slice(2, 10)}`).current;
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const [stackLevel, setStackLevel] = useState(0);
 
   // Focus management: move focus into the dialog on open, restore it on close
   useEffect(() => {
@@ -64,11 +74,25 @@ export const AppleModal: React.FC<AppleModalProps> = ({
     };
   }, [isOpen]);
 
-  // Escape to close + Tab focus trap
+  // Stack position: register while open, drops this window to the top of the
+  // overlay order (z 60, 70…) so stacked windows always render above earlier ones.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!modalStack.includes(titleId)) modalStack.push(titleId);
+    setStackLevel(modalStack.indexOf(titleId));
+    return () => {
+      const idx = modalStack.indexOf(titleId);
+      if (idx >= 0) modalStack.splice(idx, 1);
+    };
+  }, [isOpen, titleId]);
+
+  // Escape closes ONLY the topmost window + Tab focus trap
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        const topmost = modalStack[modalStack.length - 1];
+        if (topmost !== titleId) return; // a window opened above us stays focused
         e.stopPropagation();
         onClose();
         return;
@@ -96,7 +120,7 @@ export const AppleModal: React.FC<AppleModalProps> = ({
     };
     document.addEventListener('keydown', handleKeyDown, false);
     return () => document.removeEventListener('keydown', handleKeyDown, false);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, titleId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,8 +145,11 @@ export const AppleModal: React.FC<AppleModalProps> = ({
     '5xl': 'w-full sm:max-w-3xl md:max-w-5xl lg:max-w-6xl',
   }[maxWidth];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      style={{ zIndex: 50 + stackLevel * 10 }}
+    >
       {/* Dimming & Frosted Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-md transition-opacity animate-apple-fade-in"
@@ -130,14 +157,16 @@ export const AppleModal: React.FC<AppleModalProps> = ({
         onClick={onClose}
       />
 
-      {/* iOS Modal / Sheet Surface */}
+      {/* iOS Modal / Sheet Surface — rendered through a portal to <body> so it
+          can never be trapped inside a parent's transform/stacking context
+          ("window inside page") no matter where the page renders the JSX. */}
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative w-full ${maxWidthClasses} glass-panel dark:bg-[#1C1C1E]/95 rounded-3xl sm:rounded-4xl shadow-apple-modal border border-white/60 dark:border-white/10 overflow-hidden flex flex-col z-10 animate-apple-modal max-h-[90vh] my-auto outline-none`}
+        className={`relative w-full ${maxWidthClasses} glass-panel dark:bg-[#1C1C1E]/95 rounded-3xl sm:rounded-4xl shadow-apple-modal border border-white/60 dark:border-white/10 overflow-hidden flex flex-col animate-apple-modal max-h-[90vh] my-auto outline-none`}
       >
         {/* iOS Sheet Drag Handle (Visual indicator) */}
         <div className="w-12 h-1.5 rounded-full bg-black/15 dark:bg-white/20 mx-auto mt-2.5 sm:hidden" />
@@ -173,6 +202,9 @@ export const AppleModal: React.FC<AppleModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
+
+export { AppleModal };

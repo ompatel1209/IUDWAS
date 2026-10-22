@@ -5,6 +5,8 @@ import { Sidebar } from './Sidebar';
 import { CommandPalette } from '../ui/CommandPalette';
 import { ToastContainer } from '../ui/ToastContainer';
 
+import { LiveUpdatesProvider } from '../../context/LiveUpdatesContext';
+
 export const AppLayout: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -18,28 +20,30 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-apple-bg-light dark:bg-apple-bg-dark text-neutral-900 dark:text-neutral-100 flex flex-col font-sans">
-      <Navbar
-        onOpenCommand={() => setIsCommandOpen(true)}
-        onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-      />
-
-      <div className="flex flex-1 w-full max-w-[1600px] mx-auto">
-        <Sidebar
-          isOpen={isMobileSidebarOpen}
-          onClose={() => setIsMobileSidebarOpen(false)}
+      <LiveUpdatesProvider>
+        <Navbar
+          onOpenCommand={() => setIsCommandOpen(true)}
+          onToggleSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto min-w-0">
-          <Outlet />
-        </main>
-      </div>
+        <div className="flex flex-1 w-full max-w-[1600px] mx-auto">
+          <Sidebar
+            isOpen={isMobileSidebarOpen}
+            onClose={() => setIsMobileSidebarOpen(false)}
+          />
 
-      <CommandPalette
-        isOpen={isCommandOpen}
-        onClose={() => setIsCommandOpen(false)}
-      />
+          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto min-w-0">
+            <Outlet />
+          </main>
+        </div>
 
-      <ToastContainer />
+        <CommandPalette
+          isOpen={isCommandOpen}
+          onClose={() => setIsCommandOpen(false)}
+        />
+
+        <ToastContainer />
+      </LiveUpdatesProvider>
     </div>
   );
 };

@@ -30,6 +30,22 @@
  * ============================================================================
  */
 
+/**
+ * Build a URL query string while dropping empty/undefined params. Prevents
+ * "search=undefined&category_id=undefined" requests (which the backend
+ * correctly rejects with 400) whenever a page's filters are cleared.
+ */
+const qs = (params: any = {}): string => {
+  const clean: Record<string, string> = {};
+  Object.entries(params ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      clean[key] = String(value);
+    }
+  });
+  return new URLSearchParams(clean).toString();
+};
+
+
 import { ApiResponse, User, Department, DocumentItem, DocumentVersion, DocCategory, Tag, WorkflowTemplate, WorkflowInstance, NotificationItem, AuditLogItem } from '../types';
 
 const API_BASE = '/api/v1';
@@ -263,7 +279,7 @@ export const api = {
   // Users CRUD
   users: {
     list: (params: { page?: number; limit?: number; search?: string; role?: string; department_id?: string; status?: string; sortBy?: string; sortOrder?: string } = {}) => {
-      const q = new URLSearchParams(params as any).toString();
+      const q = qs(params);
       return apiRequest<User[]>(`/users?${q}`);
     },
     get: (id: string) => apiRequest<User>(`/users/${id}`),
@@ -320,7 +336,7 @@ export const api = {
   // Documents CRUD & Versions
   documents: {
     list: (params: { page?: number; limit?: number; search?: string; category_id?: string; department_id?: string; status?: string; uploaded_by?: string; sortBy?: string; sortOrder?: string } = {}) => {
-      const q = new URLSearchParams(params as any).toString();
+      const q = qs(params);
       return apiRequest<DocumentItem[]>(`/documents?${q}`);
     },
     get: (id: string) => apiRequest<DocumentItem>(`/documents/${id}`),
@@ -378,7 +394,7 @@ export const api = {
     start: (data: { workflow_id: string; document_id: string; comments?: string }) =>
       apiRequest<WorkflowInstance>('/workflow-instances', { method: 'POST', body: JSON.stringify(data) }),
     list: (params: { page?: number; limit?: number; status?: string; workflow_id?: string; scope?: string } = {}) => {
-      const q = new URLSearchParams(params as any).toString();
+      const q = qs(params);
       return apiRequest<WorkflowInstance[]>(`/workflow-instances?${q}`);
     },
     getPending: () => apiRequest<WorkflowInstance[]>('/workflow-instances/pending'),
@@ -394,7 +410,7 @@ export const api = {
   // Notifications
   notifications: {
     list: (params: { page?: number; limit?: number; unread?: boolean } = {}) => {
-      const q = new URLSearchParams(params as any).toString();
+      const q = qs(params);
       return apiRequest<NotificationItem[]>(`/notifications?${q}`);
     },
     unreadCount: () => apiRequest<{ unread_count: number }>('/notifications/unread-count'),
@@ -434,7 +450,7 @@ export const api = {
   // Audit Logs
   audit: {
     list: (params: { page?: number; limit?: number; action?: string; resource_type?: string; user_id?: string; search?: string } = {}) => {
-      const q = new URLSearchParams(params as any).toString();
+      const q = qs(params);
       return apiRequest<AuditLogItem[]>(`/audit?${q}`);
     },
     get: (id: string) => apiRequest<AuditLogItem>(`/audit/${id}`),

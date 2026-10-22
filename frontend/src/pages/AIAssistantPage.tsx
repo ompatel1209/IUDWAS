@@ -32,6 +32,30 @@ interface ChatMessage {
   suggested_actions?: string[];
 }
 
+/**
+ * Renders the assistant's lightweight markup: **bold** spans and newlines,
+ * as real React nodes (no dangerouslySetInnerHTML — content is escaped by React).
+ */
+const renderInline = (text: string): React.ReactNode[] => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+};
+
+const RichText: React.FC<{ content: string }> = ({ content }) => (
+  <>
+    {content.split('\n').map((line, i) => (
+      <p key={i} className={i > 0 ? 'mt-1.5' : undefined}>
+        {renderInline(line)}
+      </p>
+    ))}
+  </>
+);
+
 export const AIAssistantPage: React.FC = () => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'chat' | 'summarizer' | 'semantic_search'>('chat');
@@ -55,12 +79,14 @@ export const AIAssistantPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Hello! I am your IUDWAS Intelligent Assistant. You can ask me questions about university course exemption policies, research grant review workflows, or query any document in your vault.',
+      content:
+        'Hello! 👋 I am your IUDWAS assistant. Ask me anything — every answer I give is grounded in the live university database: the real approval chains, the real SLAs, your actual documents and your real request statuses.\n\nTry one of the buttons below, or just type your question.',
       timestamp: new Date().toISOString(),
       suggested_actions: [
-        'How do I submit a Course Exemption request?',
-        'What are the Research Grant review stages?',
-        'How does AI OCR text extraction work?',
+        'How do I apply for the Course Exemption workflow?',
+        'What is the status of my requests?',
+        'Where is my transcript?',
+        'What can each role do here?',
       ],
     },
   ]);
@@ -246,7 +272,7 @@ export const AIAssistantPage: React.FC = () => {
                         : 'glass-panel dark:bg-[#2C2C2E] text-neutral-800 dark:text-neutral-200 rounded-tl-none whitespace-pre-wrap'
                     }`}
                   >
-                    <p>{msg.content}</p>
+                    <RichText content={msg.content} />
 
                     {/* Suggested follow-up prompts */}
                     {msg.suggested_actions && (
@@ -338,10 +364,10 @@ export const AIAssistantPage: React.FC = () => {
               </h4>
               <div className="space-y-1.5">
                 {[
-                  'What is the syllabus overlap for CS402?',
-                  'Who reviews Student Medical Leave requests?',
-                  'Summarize my highest GPA courses',
-                  'What are the security standards implemented?',
+                  'Where is my transcript?',
+                  'Explain the Medical Leave approval chain',
+                  'What is the status of my requests?',
+                  'How does OCR text extraction work here?',
                 ].map((prompt, pIdx) => (
                   <button
                     key={pIdx}
@@ -414,20 +440,20 @@ export const AIAssistantPage: React.FC = () => {
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white">
                   Executive Briefing
                 </h3>
-                {summaryResult && (
+                {summaryResult && !!summaryResult.summary && (
                   <AppleBadge variant="green" size="sm">
                     {summaryResult.reading_time_seconds}s Reading Time
                   </AppleBadge>
                 )}
               </div>
 
-              {summaryResult ? (
+              {summaryResult && !(summaryResult.summary_status === 'unavailable' || !summaryResult.summary) ? (
                 <div className="mt-4 space-y-4">
                   <div className="p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/5 dark:border-white/5 text-xs sm:text-sm text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap leading-relaxed">
                     {summaryResult.summary}
                   </div>
 
-                  {summaryResult.key_points && (
+                  {summaryResult.key_points && summaryResult.key_points.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-400">
                         Key Institutional Takeaways
@@ -442,6 +468,10 @@ export const AIAssistantPage: React.FC = () => {
                       </ul>
                     </div>
                   )}
+                </div>
+              ) : summaryResult && !summaryResult.summary ? (
+                <div className="mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                  {summaryResult.message || 'No OCR text is available to summarize yet.'}
                 </div>
               ) : (
                 <div className="py-20 text-center text-xs text-neutral-400">

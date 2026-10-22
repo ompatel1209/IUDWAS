@@ -36,6 +36,7 @@ import notificationsRoutes from './notifications.routes';
 import auditRoutes from './audit.routes';
 import analyticsRoutes from './analytics.routes';
 import systemRoutes from './system.routes';
+import liveEventsRoutes from './live.routes';
 import aiRoutes from './ai.routes';
 
 const router = Router();
@@ -51,6 +52,10 @@ router.use('/workflow-instances', workflowInstancesRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/audit', auditRoutes);
 router.use('/analytics', analyticsRoutes);
+// Live stream mounts BEFORE the generic /system router: liveEventsRoutes
+// exposes GET '/events' under the /system prefix and non-matching paths
+// (/system/health…) fall through to systemRoutes.
+router.use('/system', liveEventsRoutes);
 router.use('/system', systemRoutes);
 router.use('/ai', aiRoutes);
 

@@ -34,6 +34,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { getDatabase } from '../db/database';
 import { sendSuccess, sendError } from '../utils/response';
+import { publishLiveEvent } from '../services/live-events.service';
 import { recordAuditLog } from '../middleware/audit.middleware';
 import { config } from '../config';
 
@@ -94,6 +95,7 @@ export class NotificationsController {
       const db = getDatabase();
 
       db.prepare('UPDATE notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?').run(id, user.userId);
+      publishLiveEvent('notification:changed', { resource: 'notification', id: String(id), actor_user_id: user.userId, target_user_id: req.user!.userId });
       sendSuccess(res, { message: 'Notification marked as read' });
     } catch (err: any) {
       sendError(res, 'MARK_READ_ERROR', err.message, 500);
@@ -106,6 +108,7 @@ export class NotificationsController {
       const db = getDatabase();
 
       db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?').run(user.userId);
+      publishLiveEvent('notification:changed', { resource: 'notification', actor_user_id: user.userId, target_user_id: req.user!.userId });
       sendSuccess(res, { message: 'All notifications marked as read' });
     } catch (err: any) {
       sendError(res, 'MARK_ALL_READ_ERROR', err.message, 500);
@@ -274,6 +277,7 @@ export class NotificationsController {
         }
       );
 
+      publishLiveEvent('notification:changed', { resource: 'notification', target_user_id: req.user!.userId });
       sendSuccess(res, {
         message: `Official notification digitally signed and delivered to ${recipientUsers.length} recipient(s).`,
         recipients_count: recipientUsers.length,

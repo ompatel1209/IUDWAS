@@ -39,6 +39,7 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/database';
 import { sendSuccess, sendError } from '../utils/response';
+import { publishLiveEvent } from '../services/live-events.service';
 import { recordAuditLog } from '../middleware/audit.middleware';
 import { DocumentType } from '../types';
 
@@ -170,6 +171,7 @@ export class DocumentsController {
         WHERE d.document_id = ?
       `).get(documentId) as any;
 
+      publishLiveEvent('document:changed', { resource: 'document', id: created?.document_id, actor_user_id: user.userId });
       sendSuccess(res, {
         ...created,
         is_confidential: Boolean(created.is_confidential),
@@ -406,6 +408,7 @@ export class DocumentsController {
       });
 
       const updated = db.prepare('SELECT * FROM documents WHERE document_id = ?').get(id) as any;
+      publishLiveEvent('document:changed', { resource: 'document', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, { ...updated, is_confidential: Boolean(updated.is_confidential) });
     } catch (err: any) {
       sendError(res, 'DOCUMENT_UPDATE_ERROR', err.message, 500);
@@ -481,6 +484,7 @@ export class DocumentsController {
       });
 
       const updated = db.prepare('SELECT * FROM documents WHERE document_id = ?').get(id) as any;
+      publishLiveEvent('document:changed', { resource: 'document', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, { ...updated, is_confidential: Boolean(updated.is_confidential) }, undefined, 201);
     } catch (err: any) {
       sendError(res, 'VERSION_UPLOAD_ERROR', err.message, 500);
@@ -627,6 +631,7 @@ export class DocumentsController {
 
       recordAuditLog(user.userId, 'DOCUMENT_SOFT_DELETE', 'DOCUMENT', id, req.ip, req.headers['user-agent'] as string);
 
+      publishLiveEvent('document:changed', { resource: 'document', id: String(id), actor_user_id: user.userId });
       sendSuccess(res, { message: 'Document has been archived and moved to trash.' });
     } catch (err: any) {
       sendError(res, 'DOCUMENT_DELETE_ERROR', err.message, 500);
@@ -675,6 +680,7 @@ export class DocumentsController {
         recipient_email: targetUser.email,
       });
 
+      publishLiveEvent('document:changed', { resource: 'document', id: String(id), actor_user_id: user.userId, target_user_id: targetUser.user_id });
       sendSuccess(res, { message: `Document shared with ${targetUser.full_name}.` });
     } catch (err: any) {
       sendError(res, 'SHARE_ERROR', err.message, 500);

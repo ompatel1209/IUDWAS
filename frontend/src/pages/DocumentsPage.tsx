@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLiveEvents } from '../context/LiveUpdatesContext';
+import { FilePreviewModal } from '../components/ui/FilePreviewModal';
 import { api, downloadWithAuth } from '../services/api';
 import { DocumentItem, DocCategory, Department, Tag, DocumentVersion } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
@@ -22,6 +24,7 @@ import {
   Filter,
   Download,
   Eye,
+  BookOpen,
   Share2,
   Trash2,
   Layers,
@@ -38,6 +41,11 @@ export const DocumentsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { showToast, celebrate } = useToast();
+
+  // Live updates: any document change anywhere refreshes this vault view
+  useLiveEvents(['document:changed'], () => {
+    void loadDocuments();
+  });
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [categories, setCategories] = useState<DocCategory[]>([]);
@@ -62,6 +70,7 @@ export const DocumentsPage: React.FC = () => {
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [docVersions, setDocVersions] = useState<DocumentVersion[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
 
   // Upload Form State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -205,12 +214,17 @@ export const DocumentsPage: React.FC = () => {
       formData.append('is_confidential', String(uploadConfidential));
       formData.append('tags', JSON.stringify(uploadTags));
 
-      await api.documents.upload(formData);
+      const created = (await api.documents.upload(formData))?.data as DocumentItem | undefined;
       showToast('success', 'Document Uploaded', 'Document processed with AI OCR and saved.');
       celebrate();
       setIsUploadModalOpen(false);
       resetUploadForm();
       loadDocuments();
+      // Right after uploading, open the in-app viewer so the user can check
+      // the PDF immediately — the east ask "PDF view after upload".
+      if (created?.document_id) {
+        setPreviewDoc(created);
+      }
     } catch (err: any) {
       showToast('error', 'Upload Failed', err.message);
     } finally {
@@ -390,6 +404,14 @@ export const DocumentsPage: React.FC = () => {
       header: 'Actions',
       cell: (row) => (
         <div className="flex items-center gap-1.5 justify-end">
+          <button
+            onClick={() => setPreviewDoc(row)}
+            className="p-2 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-blue-500/10"
+            title="Preview PDF / File in browser"
+            aria-label={`Preview ${row.title || 'document'}`}
+          >
+            <BookOpen className="w-5 h-5" />
+          </button>
           <button
             onClick={() => openDocumentDetails(row)}
             className="p-2 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
@@ -716,6 +738,14 @@ export const DocumentsPage: React.FC = () => {
                   Upload New Version
                 </AppleButton>
                 <AppleButton
+                  variant="secondary"
+                  size="sm"
+                  icon={<BookOpen className="w-4 h-4" />}
+                  onClick={() => setPreviewDoc(selectedDoc)}
+                >
+                  Preview
+                </AppleButton>
+                <AppleButton
                   variant="primary"
                   size="sm"
                   icon={<Download className={`w-4 h-4 ${downloadingId === selectedDoc.document_id ? 'animate-pulse' : ''}`} />}
@@ -896,6 +926,17 @@ export const DocumentsPage: React.FC = () => {
         destructive
         loading={deleting}
       />
+
+      {/* In-app document preview (PDF viewer / image viewer) */}
+      {previewDoc && (
+        <FilePreviewModal
+          isOpen
+          onClose={() => setPreviewDoc(null)}
+          documentId={previewDoc.document_id}
+          title={previewDoc.title}
+          fileName={previewDoc.file_name}
+        />
+      )}
     </div>
   );
 };

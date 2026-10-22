@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
 import { Bell, Sun, Moon, Search, LogOut, User as UserIcon, Shield, Layers, Camera } from 'lucide-react';
+import { useLiveConnection, useLiveEvents } from '../../context/LiveUpdatesContext';
 import { AppleBadge } from '../ui/AppleBadge';
 import { ProfileModal } from '../ui/ProfileModal';
 
@@ -15,6 +16,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { connected } = useLiveConnection();
   const [unreadCount, setUnreadCount] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -30,6 +32,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
       // Ignore
     }
   };
+
+  // Live badge: refresh instantly when a notification arrives anywhere
+  useLiveEvents(['notification:changed'], () => {
+    void fetchUnread();
+  }, 250);
 
   useEffect(() => {
     if (!user) {
@@ -135,6 +142,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
           >
             {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
           </button>
+
+          {/* Live connection indicator */}
+          <span
+            aria-hidden="true"
+            title={connected ? 'Live updates connected' : 'Live updates offline'}
+            className={`hidden sm:inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${connected ? 'bg-apple-green animate-pulse' : 'bg-neutral-400'}`}
+          />
 
           {/* Notifications */}
           <button

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useLiveEvents } from '../context/LiveUpdatesContext';
 import { NotificationItem } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
 import { AppleButton } from '../components/ui/AppleButton';
@@ -31,6 +32,11 @@ export const NotificationsPage: React.FC = () => {
   const [filterUnread, setFilterUnread] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const { showToast } = useToast();
+
+  // Live updates: the notifications list refreshes itself when one arrives
+  useLiveEvents(['notification:changed'], () => {
+    void loadNotifications();
+  }, 400);
   const navigate = useNavigate();
 
   const canSend = isAdmin || isDeptAdmin || isFaculty;
