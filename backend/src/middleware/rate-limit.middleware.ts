@@ -77,6 +77,31 @@ export const authIpLimiter: RateLimitRequestHandler = rateLimit({
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+// 1b. REFRESH LIMITER
+//     Dedicated bucket for POST /auth/refresh. The SPA calls this automatically
+//     whenever an access token expires, so it must never consume (or be
+//     starved by) the scarce login/register IP budget — otherwise one busy
+//     session can lock every human out of the login form behind the same IP.
+// ══════════════════════════════════════════════════════════════════════════════
+
+export const refreshLimiter: RateLimitRequestHandler = rateLimit({
+  windowMs: RL.REFRESH.WINDOW_MS,
+  max: RL.REFRESH.MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    const retrySeconds = Math.ceil(RL.REFRESH.WINDOW_MS / 1000);
+    logger.debug(`[RATE] REFRESH blocked | IP=${req.ip}`);
+    rateLimitHandler(
+      'REFRESH_RATE_LIMIT',
+      `Too many token refresh requests from this IP. Allowed ${RL.REFRESH.MAX} per ${RL.REFRESH.WINDOW_MS / 60000} minutes.`,
+      req, res, retrySeconds,
+    );
+  },
+  skip: skipInTests,
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 // 2. AUTH ACCOUNT LIMITER — Exponential Backoff (per email/account)
 //    Applied ONLY to login and reset-password (routes that accept an email).
 //    On success the caller MUST call rateLimitStore.recordSuccess(email).

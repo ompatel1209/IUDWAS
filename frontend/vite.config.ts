@@ -9,6 +9,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+        // Forward the browser's real IP in X-Forwarded-For so the backend
+        // rate-limits each client individually instead of every device
+        // sharing the proxy's own 127.0.0.1 bucket.
+        xfwd: true,
       },
     },
   },

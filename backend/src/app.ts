@@ -39,6 +39,12 @@ import { sendError } from './utils/response';
 export function createApp(): express.Application {
   const app = express();
 
+  // Trust exactly one reverse-proxy hop (the Vite dev proxy in local dev, a
+  // load balancer in production). Without this, EVERY browser session behind
+  // the dev proxy is seen as 127.0.0.1 and shares a single rate-limit bucket —
+  // one busy machine could lock all humans out of the login form.
+  app.set('trust proxy', 1);
+
   // 1. Security headers via Helmet
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }

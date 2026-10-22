@@ -23,7 +23,7 @@ function env(key: string, fallback: number): number {
   return parsed;
 }
 
-// ─── AUTH TIER (login, register, forgot-password, reset-password, refresh) ───
+// ─── AUTH TIER (login, register, forgot-password, reset-password) ────────────
 export const AUTH = {
   /** Rolling window for IP-based auth limiting (ms) */
   IP_WINDOW_MS:   env('RATE_AUTH_IP_WINDOW_MS', 15 * 60 * 1000),
@@ -45,6 +45,12 @@ export const AUTH = {
    */
   ACCOUNT_RESET_WINDOW_MS: env('RATE_AUTH_ACCOUNT_RESET_WINDOW_MS', 60 * 60 * 1000),
 } as const;
+
+// ─── REFRESH TIER (automatic token renewal, substantically higher cap) ──────
+export const REFRESH = {
+  WINDOW_MS: env('RATE_REFRESH_WINDOW_MS', 15 * 60 * 1000),
+  MAX:       env('RATE_REFRESH_MAX', 120),
+};
 
 // ─── PUBLIC READ TIER (health, unauthenticated GET endpoints) ─────────────────
 export const PUBLIC_READ = {

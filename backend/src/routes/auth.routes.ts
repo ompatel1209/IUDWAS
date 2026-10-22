@@ -16,6 +16,7 @@ import {
   authAccountLimiter,
   authenticatedIpLimiter,
   authenticatedUserLimiter,
+  refreshLimiter,
 } from '../middleware/rate-limit.middleware';
 
 const router = Router();
@@ -27,8 +28,11 @@ router.post('/register',        authIpLimiter, validate({ body: registerSchema }
 router.post('/forgot-password', authIpLimiter, validate({ body: forgotPasswordSchema }), authAccountLimiter, AuthController.forgotPassword);
 router.put('/reset-password',   authIpLimiter, validate({ body: resetPasswordSchema }), authAccountLimiter, AuthController.resetPassword);
 
-// ── Token lifecycle ───────────────────────────────────────────────────────────
-router.post('/refresh', authIpLimiter, validate({ body: refreshTokenSchema }), AuthController.refresh);
+// ─── Token lifecycle ───────────────────────────────────────────────────────
+// Refresh fires automatically in the background (once per hour per tab), so it
+// does NOT share the tight login IP bucket — a generous dedicated bucket keeps
+// brute-force protection while never starving legitimate sessions.
+router.post('/refresh', refreshLimiter, validate({ body: refreshTokenSchema }), AuthController.refresh);
 
 // ── Authenticated profile routes ──────────────────────────────────────────────
 router.post('/logout',          authenticate, authenticatedIpLimiter, authenticatedUserLimiter, validate({ body: logoutSchema }), AuthController.logout);
