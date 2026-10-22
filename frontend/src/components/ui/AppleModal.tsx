@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface AppleModalProps {
@@ -11,6 +11,27 @@ interface AppleModalProps {
   actions?: React.ReactNode;
 }
 
+/**
+ * Reference-counted body scroll lock so nested modals behave correctly:
+ * opening modal B while A is open keeps the page locked; closing B must NOT
+ * unlock it while A is still on screen.
+ */
+let scrollLockCount = 0;
+
+const lockBodyScroll = () => {
+  scrollLockCount += 1;
+  if (scrollLockCount === 1) {
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+const unlockBodyScroll = () => {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) {
+    document.body.style.overflow = '';
+  }
+};
+
 export const AppleModal: React.FC<AppleModalProps> = ({
   isOpen,
   onClose,
@@ -20,19 +41,68 @@ export const AppleModal: React.FC<AppleModalProps> = ({
   maxWidth = 'lg',
   actions,
 }) => {
+  const titleId = useRef(`apple-modal-title-${Math.random().toString(36).slice(2, 10)}`).current;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  // Focus management: move focus into the dialog on open, restore it on close
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    if (!isOpen) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+
+    // Wait a tick so the panel is mounted in the DOM
+    const raf = requestAnimationFrame(() => {
+      const focusable = dialogRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      (focusable ?? dialogRef.current)?.focus();
+    });
+
     return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
+      cancelAnimationFrame(raf);
+      previouslyFocused.current?.focus?.();
     };
+  }, [isOpen]);
+
+  // Escape to close + Tab focus trap
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => el.offsetParent !== null);
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (!dialogRef.current.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown, false);
+    return () => document.removeEventListener('keydown', handleKeyDown, false);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,12 +122,18 @@ export const AppleModal: React.FC<AppleModalProps> = ({
       {/* Dimming & Frosted Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-md transition-opacity animate-apple-fade-in"
+        aria-hidden="true"
         onClick={onClose}
       />
 
       {/* iOS Modal / Sheet Surface */}
       <div
-        className={`relative w-full ${maxWidthClasses} glass-panel dark:bg-[#1C1C1E]/95 rounded-3xl sm:rounded-4xl shadow-apple-modal border border-white/60 dark:border-white/10 overflow-hidden flex flex-col z-10 animate-apple-modal max-h-[90vh] my-auto`}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`relative w-full ${maxWidthClasses} glass-panel dark:bg-[#1C1C1E]/95 rounded-3xl sm:rounded-4xl shadow-apple-modal border border-white/60 dark:border-white/10 overflow-hidden flex flex-col z-10 animate-apple-modal max-h-[90vh] my-auto outline-none`}
       >
         {/* iOS Sheet Drag Handle (Visual indicator) */}
         <div className="w-12 h-1.5 rounded-full bg-black/15 dark:bg-white/20 mx-auto mt-2.5 sm:hidden" />
@@ -65,7 +141,7 @@ export const AppleModal: React.FC<AppleModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-black/5 dark:border-white/10">
           <div className="min-w-0 pr-3">
-            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-white truncate">
+            <h3 id={titleId} className="text-lg sm:text-xl font-bold tracking-tight text-neutral-900 dark:text-white truncate">
               {title}
             </h3>
             {subtitle && (

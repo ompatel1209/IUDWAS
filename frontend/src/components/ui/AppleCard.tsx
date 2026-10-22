@@ -14,6 +14,7 @@ export const AppleCard: React.FC<AppleCardProps> = ({
   hoverable = false,
   glass = true,
   inset = false,
+  onClick,
   ...props
 }) => {
   const surfaceClasses = glass
@@ -26,10 +27,23 @@ export const AppleCard: React.FC<AppleCardProps> = ({
 
   const insetClasses = inset ? 'rounded-3xl p-6 sm:p-7' : 'rounded-3xl p-5 sm:p-6';
 
+  // Cards that trigger navigation on click must be keyboard operable too:
+  // focusable, announced as buttons, and activated with Enter/Space (M21).
+  const interactive = typeof onClick === 'function';
+
   return (
     <div
       className={`relative overflow-hidden transition-all ${surfaceClasses} ${insetClasses} ${hoverClasses} ${className}`}
-      {...props}
+      onClick={onClick}
+      role={interactive && !props['role'] ? 'button' : props['role']}
+      tabIndex={interactive && props['tabIndex'] === undefined ? 0 : props['tabIndex']}
+      onKeyDown={(e) => {
+        if (interactive && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+          e.preventDefault();
+          (onClick as (ev: unknown) => void)(e);
+        }
+        props.onKeyDown?.(e);
+      }}
     >
       {children}
     </div>

@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { AppleCard } from '../components/ui/AppleCard';
 import { AppleInput } from '../components/ui/AppleInput';
 import { AppleButton } from '../components/ui/AppleButton';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, KeyRound } from 'lucide-react';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  // `submitted` covers both outcomes: an issued code exists only when the
+  // account matched, otherwise we show the neutral response message.
   const [submitted, setSubmitted] = useState(false);
+  const [issuedToken, setIssuedToken] = useState<string | null>(null);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +26,10 @@ export const ForgotPasswordPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await api.auth.forgotPassword(email);
+      const res: any = await api.auth.forgotPassword(email);
+      setIssuedToken(res.data?.reset_token ?? null);
       setSubmitted(true);
-      showToast('success', 'Reset Request Sent', 'Check your university inbox for reset instructions.');
+      showToast('success', 'Reset Request Sent', 'Follow the instructions below to set a new password.');
     } catch (err: any) {
       showToast('error', 'Request Failed', err.message);
     } finally {
@@ -59,13 +64,44 @@ export const ForgotPasswordPage: React.FC = () => {
               <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 If an account exists for <span className="font-semibold">{email}</span>, a secure recovery code has been generated.
               </p>
-              <div className="pt-2">
-                <Link to="/reset-password">
-                  <AppleButton variant="primary" size="md" className="w-full">
+
+              {issuedToken && (
+                <div className="text-left space-y-2 rounded-2xl bg-apple-blue/5 border border-apple-blue/20 p-4">
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold text-apple-blue">
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Your recovery code (valid 15 minutes)
+                  </p>
+                  <p className="font-mono text-xs text-neutral-800 dark:text-neutral-200 break-all select-all bg-white/60 dark:bg-black/40 rounded-lg px-3 py-2">
+                    {issuedToken}
+                  </p>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    Email delivery is not configured in this build, so the code is
+                    shown here. In production it is sent to the account's inbox
+                    instead. Use it on the next screen to verify your identity.
+                  </p>
+                </div>
+              )}
+
+              {issuedToken ? (
+                <div className="pt-2">
+                  <AppleButton
+                    variant="primary"
+                    size="md"
+                    className="w-full"
+                    onClick={() =>
+                      navigate('/reset-password', {
+                        state: { email, reset_token: issuedToken },
+                      })
+                    }
+                  >
                     Proceed to Enter New Password
                   </AppleButton>
-                </Link>
-              </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-neutral-400 italic pt-1">
+                  You may close this page or try again with a different email.
+                </p>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,27 +142,46 @@ export const ForgotPasswordPage: React.FC = () => {
   );
 };
 
+interface ResetLocationState {
+  email?: string;
+  reset_token?: string;
+}
+
 export const ResetPasswordPage: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const state = (location.state as ResetLocationState | null) ?? null;
+  const [email, setEmail] = useState(state?.email ?? '');
+  const [resetToken, setResetToken] = useState(state?.reset_token ?? '');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [mismatch, setMismatch] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
+      setMismatch('Passwords do not match');
       showToast('error', 'Mismatch', 'Passwords do not match');
       return;
     }
+    setMismatch(null);
     if (newPassword.length < 6) {
       showToast('warning', 'Weak Password', 'Password must be at least 6 characters');
+      return;
+    }
+    if (!resetToken.trim()) {
+      showToast('warning', 'Verification Required', 'Paste the recovery code you received when requesting the reset.');
+      return;
+    }
+    if (!email.trim()) {
+      showToast('warning', 'Required', 'Please enter the email for the account you are recovering');
       return;
     }
 
     setLoading(true);
     try {
-      await api.auth.resetPassword(email, newPassword);
+      await api.auth.resetPassword(email.trim(), newPassword, resetToken.trim());
       showToast('success', 'Password Updated', 'You can now sign in with your new password.');
       window.location.href = '/login';
     } catch (err: any) {
@@ -160,11 +215,23 @@ export const ResetPasswordPage: React.FC = () => {
             />
 
             <AppleInput
+              label="Recovery Code"
+              type="text"
+              placeholder="Paste the code from the reset request"
+              icon={<KeyRound className="w-4 h-4" />}
+              value={resetToken}
+              onChange={(e) => setResetToken(e.target.value)}
+              required
+              autoFocus={!resetToken}
+            />
+
+            <AppleInput
               label="New Password"
               type="password"
               placeholder="••••••••"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => { setNewPassword(e.target.value); setMismatch(null); }}
+              error={mismatch ?? undefined}
               required
             />
 
@@ -173,7 +240,8 @@ export const ResetPasswordPage: React.FC = () => {
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => { setConfirmPassword(e.target.value); setMismatch(null); }}
+              error={mismatch ?? undefined}
               required
             />
 
@@ -188,6 +256,19 @@ export const ResetPasswordPage: React.FC = () => {
             </AppleButton>
           </form>
         </AppleCard>
+
+        <div className="text-center space-y-1.5">
+          <p className="text-[10px] text-neutral-400">
+            No code yet? Request one first — it is required to verify your identity.
+          </p>
+          <Link
+            to="/forgot-password"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-apple-blue hover:underline"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Request a Recovery Code
+          </Link>
+        </div>
 
         <div className="text-center">
           <Link

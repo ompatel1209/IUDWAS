@@ -31,7 +31,7 @@ export const AdminAuditPage: React.FC = () => {
         page,
         limit: 15,
         action: actionFilter || undefined,
-        user_id: search.trim() || undefined,
+        search: search.trim() || undefined,
       });
       setLogs(res.data);
       setTotal(res.meta?.total || 0);
@@ -110,6 +110,7 @@ export const AdminAuditPage: React.FC = () => {
             onClick={() => setSelectedLog(row)}
             className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
             title="Inspect Metadata Payload"
+            aria-label="Inspect metadata payload"
           >
             <Eye className="w-4 h-4" />
           </button>
@@ -213,9 +214,18 @@ export const AdminAuditPage: React.FC = () => {
                 Raw Event Payload (JSON)
               </h4>
               <div className="p-4 rounded-2xl bg-black/[0.04] dark:bg-black/50 border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-60 overflow-y-auto leading-relaxed">
-                {selectedLog.details
-                  ? JSON.stringify(typeof selectedLog.details === 'string' ? JSON.parse(selectedLog.details) : selectedLog.details, null, 2)
-                  : 'No extra metadata recorded.'}
+                {(() => {
+                  if (!selectedLog.details) return 'No extra metadata recorded.';
+                  if (typeof selectedLog.details !== 'string') {
+                    return JSON.stringify(selectedLog.details, null, 2);
+                  }
+                  try {
+                    return JSON.stringify(JSON.parse(selectedLog.details), null, 2);
+                  } catch {
+                    // Malformed payload — show raw text instead of crashing.
+                    return selectedLog.details;
+                  }
+                })()}
               </div>
             </div>
           </div>

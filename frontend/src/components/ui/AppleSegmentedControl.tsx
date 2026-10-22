@@ -49,7 +49,7 @@ export function AppleSegmentedControl<T extends string | number>({
             <span>{opt.label}</span>
             {opt.count !== undefined && (
               <span
-                className={`ml-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full transition-colors ${
+                className={`ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full transition-colors ${
                   isSelected
                     ? 'bg-apple-blue text-white shadow-xs'
                     : 'bg-black/10 dark:bg-white/15 text-neutral-600 dark:text-neutral-300'

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api';
+import { api, downloadWithAuth } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { DocumentItem } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
@@ -22,6 +22,7 @@ import {
   ArrowRight,
   ShieldCheck,
   Check,
+  Download,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -34,6 +35,21 @@ interface ChatMessage {
 export const AIAssistantPage: React.FC = () => {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'chat' | 'summarizer' | 'semantic_search'>('chat');
+
+  // Authenticated download for semantic search results
+  const [downloadingSearchDocId, setDownloadingSearchDocId] = useState<string | null>(null);
+  const handleSearchResultDownload = async (documentId: string, filename: string) => {
+    if (downloadingSearchDocId) return;
+    setDownloadingSearchDocId(documentId);
+    try {
+      await downloadWithAuth(`/documents/${documentId}/download`, `${filename}.pdf`);
+      showToast('success', 'Download Started', filename);
+    } catch (err: any) {
+      showToast('error', 'Download Failed', err.message);
+    } finally {
+      setDownloadingSearchDocId(null);
+    }
+  };
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -477,15 +493,15 @@ export const AIAssistantPage: React.FC = () => {
                   </div>
 
                   <div className="pt-2 flex justify-end">
-                    <a
-                      href={`/api/v1/documents/${item.document_id}/download`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <AppleButton
+                      variant="glass"
+                      size="sm"
+                      icon={<Download className="w-3.5 h-3.5" />}
+                      loading={downloadingSearchDocId === item.document_id}
+                      onClick={() => handleSearchResultDownload(item.document_id, item.title || 'document')}
                     >
-                      <AppleButton variant="glass" size="sm">
-                        Download Document
-                      </AppleButton>
-                    </a>
+                      Download Document
+                    </AppleButton>
                   </div>
                 </AppleCard>
               ))}

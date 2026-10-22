@@ -64,7 +64,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                   {step.step_name}
                 </p>
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
-                  {step.approver_role.replace('_', ' ')}
+                  {step.approver_role?.replace('_', ' ') ?? 'Unassigned'}
                 </p>
               </div>
             </div>

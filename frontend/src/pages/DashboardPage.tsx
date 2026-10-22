@@ -51,8 +51,8 @@ export const DashboardPage: React.FC = () => {
 
   const canApprove = isFaculty || isDeptAdmin || isAdmin;
 
-  const loadDashboardData = async () => {
-    setLoading(true);
+  const loadDashboardData = async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       const userRes = await api.analytics.userMetrics();
       setMetrics(userRes.data);
@@ -69,7 +69,8 @@ export const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadDashboardData();
+    loadDashboardData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleApprove = async () => {
@@ -81,7 +82,8 @@ export const DashboardPage: React.FC = () => {
       celebrate();
       setActionModal(null);
       setActionComment('');
-      loadDashboardData();
+      // Silent refresh: keep the page mounted rather than flashing a full-page spinner
+      loadDashboardData(false);
     } catch (err: any) {
       showToast('error', 'Approval Error', err.message);
     } finally {
@@ -101,7 +103,8 @@ export const DashboardPage: React.FC = () => {
       showToast('info', 'Workflow Rejected', 'The submitter has been notified.');
       setActionModal(null);
       setActionComment('');
-      loadDashboardData();
+      // Silent refresh instead of a full-page spin
+      loadDashboardData(false);
     } catch (err: any) {
       showToast('error', 'Rejection Error', err.message);
     } finally {

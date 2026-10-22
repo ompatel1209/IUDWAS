@@ -49,14 +49,16 @@ export class ApiError extends Error {
 }
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+// Callbacks waiting for an in-flight refresh. Called with a token on success,
+// or `null` when the refresh fails so waiters can reject instead of hanging.
+let refreshSubscribers: ((token: string | null) => void)[] = [];
 
-function subscribeTokenRefresh(cb: (token: string) => void) {
+function subscribeTokenRefresh(cb: (token: string | null) => void) {
   refreshSubscribers.push(cb);
 }
 
-function onRefreshed(token: string) {
-  refreshSubscribers.map(cb => cb(token));
+function onRefreshed(token: string | null) {
+  refreshSubscribers.forEach(cb => cb(token));
   refreshSubscribers = [];
 }
 
@@ -87,50 +89,68 @@ export async function apiRequest<T = any>(
       const refreshToken = localStorage.getItem('iudwas_refresh_token');
       if (refreshToken) {
         if (!isRefreshing) {
+          // This request initiates the refresh cycle.
           isRefreshing = true;
+          let newToken: string | null = null;
           try {
             const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ refreshToken }),
             });
-            const refreshJson: ApiResponse<{ accessToken: string; refreshToken: string }> = await refreshRes.json();
-            if (refreshJson.success && refreshJson.data) {
+            const refreshJson: ApiResponse<{ accessToken: string; refreshToken: string }> =
+              await refreshRes.json().catch(() => null as any);
+            if (refreshJson && refreshJson.success && refreshJson.data) {
               localStorage.setItem('iudwas_token', refreshJson.data.accessToken);
               localStorage.setItem('iudwas_refresh_token', refreshJson.data.refreshToken);
-              isRefreshing = false;
-              onRefreshed(refreshJson.data.accessToken);
-            } else {
-              isRefreshing = false;
-              localStorage.removeItem('iudwas_token');
-              localStorage.removeItem('iudwas_refresh_token');
-              localStorage.removeItem('iudwas_user');
-              window.location.href = '/login';
-              throw new ApiError('Session expired. Please log in again.', 'SESSION_EXPIRED', 401);
+              newToken = refreshJson.data.accessToken;
             }
-          } catch (err) {
+          } catch {
+            newToken = null;
+          } finally {
             isRefreshing = false;
-            throw err;
           }
-        }
 
-        // Retry original request with new token (works for both the initiator & concurrent waiters)
-        return new Promise((resolve, reject) => {
-          subscribeTokenRefresh(async (newToken) => {
-            try {
-              headers['Authorization'] = `Bearer ${newToken}`;
-              const retryRes = await fetch(url, { ...options, headers });
-              const retryJson: ApiResponse<T> = await retryRes.json();
-              if (!retryJson.success) {
-                reject(new ApiError(retryJson.error?.message || 'Request failed', retryJson.error?.code, retryJson.error?.statusCode));
-              } else {
-                resolve({ data: retryJson.data as T, meta: retryJson.meta });
+          if (newToken) {
+            // Wake up every queued waiter, then replay THIS request directly
+            // (falling through to the normal request below would leave the
+            // initiator subscribed to an already-empty queue, hanging forever).
+            onRefreshed(newToken);
+            headers['Authorization'] = `Bearer ${newToken}`;
+            response = await fetch(url, { ...options, headers });
+          } else {
+            // Refresh failed: release all queue waiters with null so they reject
+            // instead of hanging, then force re-login for the initiator.
+            onRefreshed(null);
+            localStorage.removeItem('iudwas_token');
+            localStorage.removeItem('iudwas_refresh_token');
+            localStorage.removeItem('iudwas_user');
+            window.location.href = '/login';
+            throw new ApiError('Session expired. Please log in again.', 'SESSION_EXPIRED', 401);
+          }
+        } else {
+          // Another request is already refreshing; wait, then replay this one.
+          return new Promise((resolve, reject) => {
+            subscribeTokenRefresh(async (newToken) => {
+              try {
+                if (!newToken) {
+                  reject(new ApiError('Session expired. Please log in again.', 'SESSION_EXPIRED', 401));
+                  return;
+                }
+                headers['Authorization'] = `Bearer ${newToken}`;
+                const retryRes = await fetch(url, { ...options, headers });
+                const retryJson: ApiResponse<T> = await retryRes.json();
+                if (!retryJson.success) {
+                  reject(new ApiError(retryJson.error?.message || 'Request failed', retryJson.error?.code, retryJson.error?.statusCode));
+                } else {
+                  resolve({ data: retryJson.data as T, meta: retryJson.meta });
+                }
+              } catch (err) {
+                reject(err);
               }
-            } catch (err) {
-              reject(err);
-            }
+            });
           });
-        });
+        }
       }
     }
 
@@ -150,6 +170,43 @@ export async function apiRequest<T = any>(
     if (err instanceof ApiError) throw err;
     throw new ApiError(err.message || 'Network connection failed', 'NETWORK_ERROR', 0);
   }
+}
+
+// Authenticated binary download/export helper.
+// Plain `<a href>` navigation cannot attach the Authorization header, so all
+// protected downloads (documents, versions, CSV exports) must go through a
+// fetch + blob flow.
+export async function downloadWithAuth(
+  endpoint: string,
+  filename: string
+): Promise<void> {
+  const token = localStorage.getItem('iudwas_token');
+  const url = `${API_BASE}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  if (!res.ok) {
+    let message = 'Download failed';
+    try {
+      const json = await res.json();
+      message = json.error?.message || message;
+    } catch {
+      // Non-JSON error body — keep default message
+    }
+    throw new ApiError(message, 'DOWNLOAD_FAILED', res.status);
+  }
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  // Revoke after the browser has had a chance to start the download.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
 }
 
 // API Services
@@ -177,10 +234,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ email }),
       }),
-    resetPassword: (email: string, new_password: string) =>
+    resetPassword: (email: string, new_password: string, reset_token: string) =>
       apiRequest('/auth/reset-password', {
         method: 'PUT',
-        body: JSON.stringify({ email, new_password }),
+        body: JSON.stringify({ email, new_password, reset_token }),
       }),
     uploadAvatar: (formData: FormData) =>
       apiRequest<{ message: string; avatar_url: string; user: User }>('/auth/avatar', {
@@ -287,7 +344,7 @@ export const api = {
       apiRequest(`/documents/${id}`, {
         method: 'DELETE',
       }),
-    share: (id: string, data: { user_ids?: string[]; department_id?: string; message?: string }) =>
+    share: (id: string, data: { recipient_email: string; message?: string }) =>
       apiRequest(`/documents/${id}/share`, {
         method: 'POST',
         body: JSON.stringify(data),

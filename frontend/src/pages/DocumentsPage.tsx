@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { api } from '../services/api';
+import { api, downloadWithAuth } from '../services/api';
 import { DocumentItem, DocCategory, Department, Tag, DocumentVersion } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
 import { AppleButton } from '../components/ui/AppleButton';
@@ -14,6 +14,7 @@ import { AppleSegmentedControl } from '../components/ui/AppleSegmentedControl';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import {
   FileText,
   Upload,
@@ -82,14 +83,56 @@ export const DocumentsPage: React.FC = () => {
   const [shareMessage, setShareMessage] = useState('');
   const [sharing, setSharing] = useState(false);
 
+  // Download state (authenticated blob download, one in-flight per document)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Delete confirmation state (replaces blocking window.confirm)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check URL query parameters for action
+  const handleDownload = async (documentId: string, filename: string) => {
+    if (downloadingId) return;
+    setDownloadingId(documentId);
+    try {
+      await downloadWithAuth(`/documents/${documentId}/download`, filename);
+      showToast('success', 'Download Started', filename);
+    } catch (err: any) {
+      showToast('error', 'Download Failed', err.message);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  // Check URL query parameters for action & highlight deep-links
   useEffect(() => {
     if (searchParams.get('action') === 'upload') {
       setIsUploadModalOpen(true);
+      // Clear the param so refresh / back-forward navigation does not re-open it
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
+
+  // Deep-link support: /documents?highlight=<id> opens the document detail
+  // modal (used by dashboard recents, notifications, and AI search results).
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight');
+    if (highlightId && documents.length > 0) {
+      const target = documents.find((d) => d.document_id === highlightId);
+      if (target) openDocumentDetails(target);
+      searchParams.delete('highlight');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, documents]);
+
+  // Debounce search so typing doesn't fire one API call per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const loadMetadata = async () => {
     try {
@@ -112,7 +155,7 @@ export const DocumentsPage: React.FC = () => {
       const res = await api.documents.list({
         page,
         limit: 10,
-        search: search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         category_id: categoryId || undefined,
         department_id: departmentId || undefined,
         status: status || undefined,
@@ -133,15 +176,16 @@ export const DocumentsPage: React.FC = () => {
 
   useEffect(() => {
     loadDocuments();
-  }, [page, search, categoryId, departmentId, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch, categoryId, departmentId, status]);
 
   const handleFileSelect = (file: File) => {
     setUploadFile(file);
     if (!uploadTitle) {
       setUploadTitle(file.name.replace(/\.[^/.]+$/, ''));
     }
-    // Simulate smart OCR extract preview
-    setOcrPreview(`[AI OCR AUTO-SCAN INITIALIZED]\nScanning ${file.name} (${(file.size / 1024).toFixed(1)} KB)...\nDocument detected and tagged for high-accuracy text extraction.`);
+    // Truthful progress hint — real OCR extraction happens server-side after upload
+    setOcrPreview(`Ready to upload "${file.name}" (${(file.size / 1024).toFixed(1)} KB).\nAI OCR text extraction will run automatically once the upload completes.`);
   };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
@@ -197,7 +241,15 @@ export const DocumentsPage: React.FC = () => {
 
   const handleNewVersionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDoc || !versionFile) return;
+    if (!selectedDoc) return;
+    if (!versionFile) {
+      showToast('warning', 'File Required', 'Select the updated file to upload as a new revision.');
+      return;
+    }
+    if (!versionDescription.trim()) {
+      showToast('warning', 'Description Required', 'Describe what changed in this revision.');
+      return;
+    }
 
     setVersionUploading(true);
     try {
@@ -227,12 +279,17 @@ export const DocumentsPage: React.FC = () => {
   const handleShareSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoc) return;
+    // Inline validation — recipient email is required by the share API
+    if (!shareUserEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shareUserEmail.trim())) {
+      showToast('warning', 'Invalid Email', 'Enter a valid university email address to share with.');
+      return;
+    }
 
     setSharing(true);
     try {
-      // Find user by email or share
       await api.documents.share(selectedDoc.document_id, {
-        message: shareMessage,
+        recipient_email: shareUserEmail.trim(),
+        message: shareMessage || undefined,
       });
       showToast('success', 'Document Shared', 'Notification dispatched to collaborators.');
       setIsShareModalOpen(false);
@@ -245,15 +302,23 @@ export const DocumentsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('Are you sure you want to move this document to trash?')) return;
+  const handleDeleteRequest = (doc: { document_id: string; title: string }) => {
+    setDeleteTarget({ id: doc.document_id, title: doc.title });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.documents.delete(docId);
+      await api.documents.delete(deleteTarget.id);
       showToast('info', 'Document Removed', 'Moved to archive/trash');
       if (isDetailModalOpen) setIsDetailModalOpen(false);
+      setDeleteTarget(null);
       loadDocuments();
     } catch (err: any) {
       showToast('error', 'Delete Failed', err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -332,19 +397,22 @@ export const DocumentsPage: React.FC = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
-          <a
-            href={`/api/v1/documents/${row.document_id}/download`}
-            target="_blank"
-            rel="noreferrer"
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
-            title="Download Document"
-          >
-            <Download className="w-4 h-4" />
-          </a>
           <button
-            onClick={() => handleDelete(row.document_id)}
+            onClick={() =>
+              handleDownload(row.document_id, row.file_name || row.title || 'document')
+            }
+            disabled={downloadingId === row.document_id}
+            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+            title="Download Document"
+            aria-label={`Download ${row.title || 'document'}`}
+          >
+            <Download className={`w-4 h-4 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
+          </button>
+          <button
+            onClick={() => handleDeleteRequest(row)}
             className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete Document"
+            aria-label={`Delete ${row.title || 'document'}`}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -379,7 +447,7 @@ export const DocumentsPage: React.FC = () => {
       {/* Filter and View Controls Toolbar */}
       <AppleCard className="p-4 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
             <AppleInput
               placeholder="Search by title, filename, or OCR text..."
               icon={<Search className="w-4 h-4" />}
@@ -402,10 +470,11 @@ export const DocumentsPage: React.FC = () => {
             </AppleSelect>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <AppleSelect
               value={departmentId}
               onChange={(e) => setDepartmentId(e.target.value)}
+              aria-label="Filter by department"
             >
               <option value="">All Departments</option>
               {departments.map((d) => (
@@ -413,6 +482,18 @@ export const DocumentsPage: React.FC = () => {
                   {d.name}
                 </option>
               ))}
+            </AppleSelect>
+          </div>
+
+          <div className="lg:col-span-2">
+            <AppleSelect
+              value={status}
+              onChange={(e) => { setPage(1); setStatus(e.target.value); }}
+              aria-label="Filter by document status"
+            >
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+              <option value="deleted">Trash</option>
             </AppleSelect>
           </div>
 
@@ -612,7 +693,7 @@ export const DocumentsPage: React.FC = () => {
                   variant="destructive"
                   size="sm"
                   icon={<Trash2 className="w-3.5 h-3.5" />}
-                  onClick={() => handleDelete(selectedDoc.document_id)}
+                  onClick={() => handleDeleteRequest(selectedDoc)}
                 >
                   Delete
                 </AppleButton>
@@ -634,19 +715,20 @@ export const DocumentsPage: React.FC = () => {
                 >
                   Upload New Version
                 </AppleButton>
-                <a
-                  href={`/api/v1/documents/${selectedDoc.document_id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <AppleButton
+                  variant="primary"
+                  size="sm"
+                  icon={<Download className={`w-3.5 h-3.5 ${downloadingId === selectedDoc.document_id ? 'animate-pulse' : ''}`} />}
+                  loading={downloadingId === selectedDoc.document_id}
+                  onClick={() =>
+                    handleDownload(
+                      selectedDoc.document_id,
+                      selectedDoc.file_name || selectedDoc.title || 'document'
+                    )
+                  }
                 >
-                  <AppleButton
-                    variant="primary"
-                    size="sm"
-                    icon={<Download className="w-3.5 h-3.5" />}
-                  >
-                    Download File
-                  </AppleButton>
-                </a>
+                  Download File
+                </AppleButton>
               </div>
             </div>
           }
@@ -678,7 +760,7 @@ export const DocumentsPage: React.FC = () => {
                   AI Extracted OCR Content
                 </h4>
                 <AppleBadge variant="teal" size="sm">
-                  98.4% Confidence
+                  OCR Extracted
                 </AppleBadge>
               </div>
               <div className="p-4 rounded-2xl bg-black/[0.03] dark:bg-black/40 border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
@@ -704,15 +786,20 @@ export const DocumentsPage: React.FC = () => {
                       </div>
                       <p className="text-neutral-500 mt-0.5">{v.change_description} · {new Date(v.created_at).toLocaleDateString()}</p>
                     </div>
-                    <a
-                      href={`/api/v1/documents/${selectedDoc.document_id}/versions/${v.version_number}/download`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10"
+                    <button
+                      onClick={() =>
+                        handleDownload(
+                          selectedDoc.document_id,
+                          `${selectedDoc.file_name || selectedDoc.title || 'document'}-v${v.version_number}`
+                        )
+                      }
+                      disabled={downloadingId === selectedDoc.document_id}
+                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
                       title="Download this version"
+                      aria-label={`Download version ${v.version_number}`}
                     >
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -797,6 +884,18 @@ export const DocumentsPage: React.FC = () => {
           </form>
         </AppleModal>
       )}
+
+      {/* Delete Document Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Document"
+        message={`"${deleteTarget?.title ?? 'This document'}" will be moved to archive/trash. You can restore it from the admin documents page until it is permanently removed.`}
+        confirmLabel="Move to Trash"
+        destructive
+        loading={deleting}
+      />
     </div>
   );
 };

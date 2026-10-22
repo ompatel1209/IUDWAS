@@ -31,8 +31,8 @@ export const AdminDashboardPage: React.FC = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       const [adminRes, healthRes] = await Promise.all([
         api.analytics.adminMetrics(),
@@ -48,9 +48,11 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 20000);
+    loadData(true);
+    // Silent background refresh: polling must never flash the whole page
+    const interval = setInterval(() => loadData(false), 20000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {
@@ -67,6 +69,19 @@ export const AdminDashboardPage: React.FC = () => {
     totalDepartments: 0,
     unreadAlerts: 0,
   };
+
+  // Health status → visual color mapping (never assume green when a service is down)
+  const serviceStatusColor = (status?: string): { text: string; dot: string } => {
+    const normalized = (status || 'OPERATIONAL').toUpperCase();
+    if (['OPERATIONAL', 'HEALTHY', 'CONNECTED'].includes(normalized)) {
+      return { text: 'text-apple-green', dot: 'bg-apple-green' };
+    }
+    if (['DEGRADED', 'RECONNECTING', 'SLOW'].includes(normalized)) {
+      return { text: 'text-apple-orange', dot: 'bg-apple-orange' };
+    }
+    return { text: 'text-apple-red', dot: 'bg-apple-red' };
+  };
+  const dbColor = serviceStatusColor(systemHealth?.database?.status);
 
   return (
     <div className="space-y-8 animate-apple-fade-in">
@@ -86,7 +101,7 @@ export const AdminDashboardPage: React.FC = () => {
           <AppleBadge variant="green" size="md" dot>
             System Operational · {systemHealth?.uptimeSeconds || 0}s Uptime
           </AppleBadge>
-          <AppleButton variant="glass" size="sm" onClick={loadData}>
+          <AppleButton variant="glass" size="sm" onClick={() => loadData(true)}>
             Refresh Telemetry
           </AppleButton>
         </div>
@@ -147,15 +162,20 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">API Gateway</span>
-              <p className="font-bold text-apple-green flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-apple-green" />
-                {systemHealth.services?.authService || 'OPERATIONAL'}
-              </p>
+              {(() => {
+                const c = serviceStatusColor(systemHealth.services?.authService);
+                return (
+                  <p className={`font-bold ${c.text} flex items-center gap-1`} aria-label={`API Gateway status: ${systemHealth.services?.authService || 'OPERATIONAL'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                    {systemHealth.services?.authService || 'OPERATIONAL'}
+                  </p>
+                );
+              })()}
             </div>
 
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">Database Engine</span>
-              <p className="font-bold text-apple-green flex items-center gap-1">
+              <p className={`font-bold ${dbColor.text} flex items-center gap-1`} aria-label={`Database status: ${systemHealth.database?.status || 'CONNECTED'}`}>
                 <Database className="w-3 h-3" />
                 {systemHealth.database?.status || 'CONNECTED'}
               </p>
@@ -163,33 +183,48 @@ export const AdminDashboardPage: React.FC = () => {
 
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">Document Vault</span>
-              <p className="font-bold text-apple-green flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-apple-green" />
-                {systemHealth.services?.documentService || 'OPERATIONAL'}
-              </p>
+              {(() => {
+                const c = serviceStatusColor(systemHealth.services?.documentService);
+                return (
+                  <p className={`font-bold ${c.text} flex items-center gap-1`} aria-label={`Document Vault status: ${systemHealth.services?.documentService || 'OPERATIONAL'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                    {systemHealth.services?.documentService || 'OPERATIONAL'}
+                  </p>
+                );
+              })()}
             </div>
 
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">Workflow Engine</span>
-              <p className="font-bold text-apple-green flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-apple-green" />
-                {systemHealth.services?.workflowEngine || 'OPERATIONAL'}
-              </p>
+              {(() => {
+                const c = serviceStatusColor(systemHealth.services?.workflowEngine);
+                return (
+                  <p className={`font-bold ${c.text} flex items-center gap-1`} aria-label={`Workflow Engine status: ${systemHealth.services?.workflowEngine || 'OPERATIONAL'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                    {systemHealth.services?.workflowEngine || 'OPERATIONAL'}
+                  </p>
+                );
+              })()}
             </div>
 
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">AI / OCR Service</span>
-              <p className="font-bold text-apple-green flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-apple-green" />
-                {systemHealth.services?.aiOcrService || 'OPERATIONAL'}
-              </p>
+              {(() => {
+                const c = serviceStatusColor(systemHealth.services?.aiOcrService);
+                return (
+                  <p className={`font-bold ${c.text} flex items-center gap-1`} aria-label={`AI/OCR status: ${systemHealth.services?.aiOcrService || 'OPERATIONAL'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                    {systemHealth.services?.aiOcrService || 'OPERATIONAL'}
+                  </p>
+                );
+              })()}
             </div>
 
             <div className="p-3 rounded-xl bg-white/60 dark:bg-black/40 border border-black/5 dark:border-white/5 space-y-1">
               <span className="text-neutral-400 text-[10px] uppercase font-bold">Memory Load</span>
               <p className="font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
-                <Cpu className="w-3 h-3 text-apple-purple" />
-                {systemHealth.system?.memoryUsageMb} MB Used
+                <Cpu className="w-3 h-3 text-apple-purple" aria-hidden="true" />
+                {systemHealth.system?.memoryUsageMb != null ? `${systemHealth.system.memoryUsageMb} MB` : '—'} Used
               </p>
             </div>
           </div>

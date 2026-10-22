@@ -37,6 +37,8 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const [departments, setDepartments] = useState<Department[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [loadingUserSearch, setLoadingUserSearch] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,6 +51,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       setTargetDeptId(user?.department_id || '');
       setTargetRole('STUDENT');
       setTargetUserId('');
+      setUserSearch('');
       setConfirmedSignature(false);
     }
   }, [isOpen]);
@@ -58,7 +61,7 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     try {
       const [deptRes, usersRes] = await Promise.all([
         api.departments.list().catch(() => ({ data: [] })),
-        api.users.list({ limit: 100 }).catch(() => ({ data: [] })),
+        api.users.list({ limit: 20 }).catch(() => ({ data: [] })),
       ]);
       setDepartments(deptRes.data || []);
       setUsersList(usersRes.data || []);
@@ -68,6 +71,24 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       setLoadingData(false);
     }
   };
+
+  // Live recipient search so users beyond the initial window are reachable
+  useEffect(() => {
+    if (!isOpen || targetType !== 'USER' || userSearch.trim().length < 2) return;
+    const t = setTimeout(async () => {
+      setLoadingUserSearch(true);
+      try {
+        const res = await api.users.list({ search: userSearch.trim(), limit: 20 });
+        setUsersList(res.data || []);
+        setTargetUserId('');
+      } catch {
+        // Keep the previous list on failure
+      } finally {
+        setLoadingUserSearch(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [userSearch, isOpen, targetType]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,19 +243,34 @@ export const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         )}
 
         {targetType === 'USER' && (
-          <AppleSelect
-            label="Select Target Recipient *"
-            value={targetUserId}
-            onChange={(e) => setTargetUserId(e.target.value)}
-            required
-          >
-            <option value="">Select a user...</option>
-            {usersList.map((u) => (
-              <option key={u.user_id} value={u.user_id}>
-                {u.full_name} ({u.email}) — {u.role.replace('_', ' ')}
+          <div className="space-y-2">
+            <AppleInput
+              label="Search Recipient by Name or Email *"
+              placeholder="Type at least 2 characters to search all users..."
+              icon={<Users className="w-4 h-4" />}
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              hint="Searches every registered user — not limited to the first 100 accounts."
+            />
+            <AppleSelect
+              value={targetUserId}
+              onChange={(e) => setTargetUserId(e.target.value)}
+              aria-label="Select target recipient"
+            >
+              <option value={''}>
+                {userSearch.trim().length < 2
+                  ? 'Start typing to search…'
+                  : loadingUserSearch
+                  ? 'Searching…'
+                  : `${usersList.length} match${usersList.length === 1 ? '' : 'es'} found — select below`}
               </option>
-            ))}
-          </AppleSelect>
+              {usersList.map((u) => (
+                <option key={u.user_id} value={u.user_id}>
+                  {u.full_name} ({u.email}) — {u.role.replace('_', ' ')}
+                </option>
+              ))}
+            </AppleSelect>
+          </div>
         )}
 
         {/* Notification Title & Content */}

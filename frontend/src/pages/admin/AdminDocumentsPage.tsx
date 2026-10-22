@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/api';
+import { api, downloadWithAuth } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { DocumentItem, DocCategory, Department, DocumentVersion } from '../../types';
 import { AppleCard } from '../../components/ui/AppleCard';
@@ -9,6 +9,7 @@ import { AppleSelect } from '../../components/ui/AppleSelect';
 import { AppleBadge } from '../../components/ui/AppleBadge';
 import { AppleModal } from '../../components/ui/AppleModal';
 import { DataTable, Column } from '../../components/ui/DataTable';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { FileText, Search, Download, Trash2, Eye, Lock, History, Sparkles } from 'lucide-react';
 
 export const AdminDocumentsPage: React.FC = () => {
@@ -30,6 +31,47 @@ export const AdminDocumentsPage: React.FC = () => {
   const [versions, setVersions] = useState<DocumentVersion[]>([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // Download & delete flow state
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Debounce search so typing doesn't fire one API call per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const handleDownload = async (documentId: string, filename: string) => {
+    if (downloadingId) return;
+    setDownloadingId(documentId);
+    try {
+      await downloadWithAuth(`/documents/${documentId}/download`, filename);
+      showToast('success', 'Download Started', filename);
+    } catch (err: any) {
+      showToast('error', 'Download Failed', err.message);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleDownloadVersion = async (documentId: string, versionNumber: number) => {
+    if (downloadingId) return;
+    setDownloadingId(documentId);
+    try {
+      await downloadWithAuth(
+        `/documents/${documentId}/versions/${versionNumber}/download`,
+        `document-v${versionNumber}`
+      );
+      showToast('success', 'Download Started', `Version ${versionNumber}`);
+    } catch (err: any) {
+      showToast('error', 'Download Failed', err.message);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -37,7 +79,7 @@ export const AdminDocumentsPage: React.FC = () => {
         api.documents.list({
           page,
           limit: 10,
-          search: search.trim() || undefined,
+          search: debouncedSearch.trim() || undefined,
           category_id: categoryId || undefined,
           department_id: departmentId || undefined,
           status: status || undefined,
@@ -59,7 +101,8 @@ export const AdminDocumentsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [page, search, categoryId, departmentId, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch, categoryId, departmentId, status]);
 
   const openDocDetails = async (doc: DocumentItem) => {
     setSelectedDoc(doc);
@@ -72,15 +115,23 @@ export const AdminDocumentsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (docId: string) => {
-    if (!window.confirm('Are you sure you want to soft-delete this document?')) return;
+  const handleDeleteRequest = (doc: DocumentItem) => {
+    setDeleteTarget({ id: doc.document_id, title: doc.title });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.documents.delete(docId);
+      await api.documents.delete(deleteTarget.id);
       showToast('info', 'Document Removed', 'Moved to archive/deleted status');
       if (isDetailModalOpen) setIsDetailModalOpen(false);
+      setDeleteTarget(null);
       loadData();
     } catch (err: any) {
       showToast('error', 'Action Failed', err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -166,19 +217,20 @@ export const AdminDocumentsPage: React.FC = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
-          <a
-            href={`/api/v1/documents/${row.document_id}/download`}
-            target="_blank"
-            rel="noreferrer"
-            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
-            title="Download Original"
-          >
-            <Download className="w-4 h-4" />
-          </a>
           <button
-            onClick={() => handleDelete(row.document_id)}
+            onClick={() => handleDownload(row.document_id, row.file_name || row.title || 'document')}
+            disabled={downloadingId === row.document_id}
+            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+            title="Download Original"
+            aria-label={`Download ${row.title || 'document'}`}
+          >
+            <Download className={`w-4 h-4 ${downloadingId === row.document_id ? 'animate-pulse' : ''}`} />
+          </button>
+          <button
+            onClick={() => handleDeleteRequest(row)}
             className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete Document"
+            aria-label={`Delete ${row.title || 'document'}`}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -277,15 +329,20 @@ export const AdminDocumentsPage: React.FC = () => {
                 {selectedDoc.is_confidential ? 'Confidential Record' : 'Standard Access'}
               </AppleBadge>
               <div className="flex items-center gap-2">
-                <a
-                  href={`/api/v1/documents/${selectedDoc.document_id}/download`}
-                  target="_blank"
-                  rel="noreferrer"
+                <AppleButton
+                  variant="primary"
+                  size="sm"
+                  icon={<Download className="w-4 h-4" />}
+                  loading={downloadingId === selectedDoc.document_id}
+                  onClick={() =>
+                    handleDownload(
+                      selectedDoc.document_id,
+                      selectedDoc.file_name || selectedDoc.title || 'document'
+                    )
+                  }
                 >
-                  <AppleButton variant="primary" size="sm" icon={<Download className="w-4 h-4" />}>
-                    Download
-                  </AppleButton>
-                </a>
+                  Download
+                </AppleButton>
                 <AppleButton variant="secondary" size="sm" onClick={() => setIsDetailModalOpen(false)}>
                   Close
                 </AppleButton>
@@ -301,7 +358,7 @@ export const AdminDocumentsPage: React.FC = () => {
                   <Sparkles className="w-3.5 h-3.5 text-apple-purple" />
                   AI OCR Extracted Content
                 </h4>
-                <AppleBadge variant="teal" size="sm">98.4% Confidence</AppleBadge>
+                <AppleBadge variant="teal" size="sm">OCR Extracted</AppleBadge>
               </div>
               <div className="p-4 rounded-2xl bg-black/[0.03] dark:bg-black/40 border border-black/5 dark:border-white/5 font-mono text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
                 {selectedDoc.ocr_text || 'No OCR extracted.'}
@@ -324,14 +381,15 @@ export const AdminDocumentsPage: React.FC = () => {
                       </div>
                       <p className="text-neutral-500 mt-0.5">{v.change_description} · {new Date(v.created_at).toLocaleString()}</p>
                     </div>
-                    <a
-                      href={`/api/v1/documents/${selectedDoc.document_id}/versions/${v.version_number}/download`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue"
+                    <button
+                      onClick={() => handleDownloadVersion(selectedDoc.document_id, v.version_number)}
+                      disabled={downloadingId === selectedDoc.document_id}
+                      className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-blue hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+                      title="Download this version"
+                      aria-label={`Download version ${v.version_number}`}
                     >
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -339,6 +397,18 @@ export const AdminDocumentsPage: React.FC = () => {
           </div>
         </AppleModal>
       )}
+
+      {/* Delete Document Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Document"
+        message={`"${deleteTarget?.title ?? 'This document'}" will be moved to archived/trash status. Related workflow history is preserved for compliance.`}
+        confirmLabel="Delete"
+        destructive
+        loading={deleting}
+      />
     </div>
   );
 };

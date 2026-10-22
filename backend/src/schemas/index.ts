@@ -95,6 +95,7 @@ export const forgotPasswordSchema = z
 export const resetPasswordSchema = z
   .object({
     email: emailSchema,
+    reset_token: z.string().trim().min(16, 'Reset code from the reset request is required'),
     new_password: passwordSchema,
   })
   .strict();

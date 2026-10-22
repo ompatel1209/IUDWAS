@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/api';
+import { api, downloadWithAuth } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { User, Department, UserRole } from '../../types';
@@ -66,6 +66,14 @@ export const AdminUsersPage: React.FC = () => {
   });
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Debounce search so typing doesn't fire one API call per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const loadData = async () => {
     setLoading(true);
@@ -74,7 +82,7 @@ export const AdminUsersPage: React.FC = () => {
         api.users.list({
           page,
           limit: 10,
-          search: search.trim() || undefined,
+          search: debouncedSearch.trim() || undefined,
           role: roleFilter || undefined,
           department_id: deptFilter || undefined,
           status: statusFilter || undefined,
@@ -94,7 +102,8 @@ export const AdminUsersPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [page, search, roleFilter, deptFilter, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch, roleFilter, deptFilter, statusFilter]);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +279,7 @@ export const AdminUsersPage: React.FC = () => {
             onClick={() => openEditModal(row)}
             className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             title="Edit User Profile"
+            aria-label={`Edit ${row.full_name}`}
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -277,6 +287,7 @@ export const AdminUsersPage: React.FC = () => {
             onClick={() => handleToggleStatus(row)}
             className={`p-1.5 rounded-lg ${row.is_active ? 'text-neutral-400 hover:text-apple-orange hover:bg-amber-500/10' : 'text-neutral-400 hover:text-apple-green hover:bg-emerald-500/10'}`}
             title={row.is_active ? 'Deactivate User' : 'Activate User'}
+            aria-label={row.is_active ? `Deactivate ${row.full_name}` : `Activate ${row.full_name}`}
           >
             <Power className="w-4 h-4" />
           </button>
@@ -287,6 +298,7 @@ export const AdminUsersPage: React.FC = () => {
             }}
             className="p-1.5 rounded-lg text-neutral-500 hover:text-apple-purple hover:bg-purple-500/10"
             title="Admin Reset Password"
+            aria-label={`Reset password for ${row.full_name}`}
           >
             <KeyRound className="w-4 h-4" />
           </button>
@@ -294,6 +306,7 @@ export const AdminUsersPage: React.FC = () => {
             onClick={() => setDeleteTargetUser(row)}
             className="p-1.5 rounded-lg text-neutral-400 hover:text-apple-red hover:bg-red-500/10"
             title="Delete / Safe Deactivate"
+            aria-label={`Delete ${row.full_name}`}
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -317,19 +330,26 @@ export const AdminUsersPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <a
-            href="/api/v1/users/export/csv"
-            target="_blank"
-            rel="noreferrer"
+          <AppleButton
+            variant="glass"
+            size="md"
+            icon={<Download className="w-4 h-4" />}
+            loading={exporting}
+            onClick={async () => {
+              if (exporting) return;
+              setExporting(true);
+              try {
+                await downloadWithAuth('/users/export/csv', 'iudwas-users.csv');
+                showToast('success', 'Export Ready', 'User roster downloaded as CSV.');
+              } catch (err: any) {
+                showToast('error', 'Export Failed', err.message);
+              } finally {
+                setExporting(false);
+              }
+            }}
           >
-            <AppleButton
-              variant="glass"
-              size="md"
-              icon={<Download className="w-4 h-4" />}
-            >
-              Export CSV
-            </AppleButton>
-          </a>
+            Export CSV
+          </AppleButton>
           <AppleButton
             variant="primary"
             size="md"
@@ -460,7 +480,9 @@ export const AdminUsersPage: React.FC = () => {
               <option value="STUDENT">Student</option>
               <option value="FACULTY">Faculty Member</option>
               <option value="DEPT_ADMIN">Department Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
+              {/* Only a Super Admin may provision admin-level accounts; Dept
+                  Admins are restricted server-side, so hide these options. */}
+              {isAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
             </AppleSelect>
 
             <AppleSelect

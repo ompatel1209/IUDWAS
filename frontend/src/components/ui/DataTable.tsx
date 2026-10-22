@@ -60,36 +60,51 @@ export function DataTable<T extends Record<string, any>>({
         <table className="w-full text-left text-sm border-collapse">
           <thead>
             <tr className="border-b border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
-              {columns.map((col, idx) => (
-                <th
-                  key={idx}
-                  className={`px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 ${
-                    col.sortable && onSort ? 'cursor-pointer select-none hover:text-neutral-900 dark:hover:text-white' : ''
-                  } ${col.className || ''}`}
-                  onClick={() => {
-                    if (col.sortable && col.accessorKey && onSort) {
-                      onSort(String(col.accessorKey));
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span>{col.header}</span>
-                    {col.sortable && (
-                      <span className="text-neutral-400">
-                        {sortBy === col.accessorKey ? (
-                          sortOrder === 'ASC' ? (
-                            <ArrowUp className="w-3.5 h-3.5 text-apple-blue" />
+              {columns.map((col, idx) => {
+                const sortable = !!col.sortable && !!col.accessorKey && !!onSort;
+                const isActive = sortable && sortBy === col.accessorKey;
+                const ariaSort: 'ascending' | 'descending' | 'none' = isActive
+                  ? sortOrder === 'ASC'
+                    ? 'ascending'
+                    : 'descending'
+                  : 'none';
+                return (
+                  <th
+                    key={idx}
+                    aria-sort={sortable ? ariaSort : undefined}
+                    className={`px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 ${
+                      sortable ? 'cursor-pointer select-none hover:text-neutral-900 dark:hover:text-white' : ''
+                    } ${col.className || ''}`}
+                    onClick={() => {
+                      if (sortable) onSort(String(col.accessorKey));
+                    }}
+                    onKeyDown={(e) => {
+                      if (sortable && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        onSort(String(col.accessorKey));
+                      }
+                    }}
+                    tabIndex={sortable ? 0 : undefined}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>{col.header}</span>
+                      {sortable && (
+                        <span className="text-neutral-400" aria-hidden="true">
+                          {isActive ? (
+                            sortOrder === 'ASC' ? (
+                              <ArrowUp className="w-3.5 h-3.5 text-apple-blue" />
+                            ) : (
+                              <ArrowDown className="w-3.5 h-3.5 text-apple-blue" />
+                            )
                           ) : (
-                            <ArrowDown className="w-3.5 h-3.5 text-apple-blue" />
-                          )
-                        ) : (
-                          <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />
-                        )}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
+                            <ArrowUpDown className="w-3.5 h-3.5 opacity-40" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-black/5 dark:divide-white/5">
@@ -138,6 +153,7 @@ export function DataTable<T extends Record<string, any>>({
               size="sm"
               onClick={() => onPageChange(1)}
               disabled={page <= 1}
+              aria-label="Go to first page"
               icon={<ChevronsLeft className="w-3.5 h-3.5" />}
             />
             <AppleButton
@@ -145,6 +161,7 @@ export function DataTable<T extends Record<string, any>>({
               size="sm"
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
+              aria-label="Go to previous page"
               icon={<ChevronLeft className="w-3.5 h-3.5" />}
             />
             <span className="px-3 py-1 text-xs font-bold text-neutral-700 dark:text-neutral-200">
@@ -155,6 +172,7 @@ export function DataTable<T extends Record<string, any>>({
               size="sm"
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
+              aria-label="Go to next page"
               icon={<ChevronRight className="w-3.5 h-3.5" />}
             />
             <AppleButton
@@ -162,6 +180,7 @@ export function DataTable<T extends Record<string, any>>({
               size="sm"
               onClick={() => onPageChange(totalPages)}
               disabled={page >= totalPages}
+              aria-label="Go to last page"
               icon={<ChevronsRight className="w-3.5 h-3.5" />}
             />
           </div>

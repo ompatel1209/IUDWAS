@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, FileText, GitPullRequest, Bot, Users, Building, Shield, Settings, ArrowRight } from 'lucide-react';
 import { api } from '../../services/api';
@@ -12,9 +12,11 @@ interface CommandPaletteProps {
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,19 +37,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Restore focus to the search field whenever the palette opens
+  useEffect(() => {
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen]);
+
   useEffect(() => {
     if (!query.trim()) {
       setSearchResults([]);
+      setSearchError(null);
       return;
     }
 
     const timer = setTimeout(async () => {
       setLoading(true);
+      setSearchError(null);
       try {
         const res = await api.ai.search(query);
         setSearchResults(res.data || []);
-      } catch {
+      } catch (err: any) {
+        // Surface search failures instead of silently hiding results
         setSearchResults([]);
+        setSearchError(err?.message || 'Semantic search is unavailable right now.');
       } finally {
         setLoading(false);
       }
@@ -70,26 +81,39 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       { label: 'Admin Dashboard', path: '/admin', icon: <Shield className="w-4 h-4 text-apple-red" /> },
       { label: 'Manage Users', path: '/admin/users', icon: <Users className="w-4 h-4 text-apple-blue" /> },
       { label: 'Manage Departments', path: '/admin/departments', icon: <Building className="w-4 h-4 text-apple-green" /> },
-      { label: 'System Settings', path: '/admin/settings', icon: <Settings className="w-4 h-4 text-neutral-400" /> }
     );
+    // System Settings is Super-Admin-only (matches the RoleGuard in App.tsx)
+    if (user.role === 'SUPER_ADMIN') {
+      quickNav.push({ label: 'System Settings', path: '/admin/settings', icon: <Settings className="w-4 h-4 text-neutral-400" /> });
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+    >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-md" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
 
       {/* Spotlight Window */}
       <div className="relative w-full max-w-2xl glass-panel dark:bg-[#1C1C1E]/95 rounded-3xl sm:rounded-4xl shadow-apple-modal border border-white/60 dark:border-white/10 overflow-hidden z-10 animate-apple-modal flex flex-col">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-6 py-4.5 border-b border-black/5 dark:border-white/10">
-          <Search className="w-5 h-5 text-neutral-400" />
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-black/5 dark:border-white/10">
+          <Search className="w-5 h-5 text-neutral-400" aria-hidden="true" />
           <input
+            ref={inputRef}
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search documents with AI, navigate, or ask a question... (Cmd+K)"
+            aria-label="Search documents and navigate"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-results"
             className="w-full bg-transparent text-base font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none"
           />
           <kbd className="hidden sm:inline-block px-2.5 py-1 text-[11px] font-bold text-neutral-400 bg-black/5 dark:bg-white/10 rounded-lg">
@@ -98,7 +122,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         </div>
 
         {/* Results Area */}
-        <div className="max-h-96 overflow-y-auto p-3 space-y-4">
+        <div id="command-palette-results" className="max-h-96 overflow-y-auto p-3 space-y-4" role="listbox" aria-label="Command palette results">
+          {loading && (
+            <p className="px-3 py-2 text-xs text-neutral-400">Searching documents…</p>
+          )}
+
+          {searchError && !loading && (
+            <p className="px-3 py-2 text-xs text-apple-red" role="alert">
+              {searchError}
+            </p>
+          )}
+
           {searchResults.length > 0 && (
             <div>
               <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">
@@ -106,13 +140,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               </p>
               <div className="mt-1 space-y-1">
                 {searchResults.map((item) => (
-                  <div
+                  <button
                     key={item.document_id}
+                    type="button"
                     onClick={() => {
                       navigate(`/documents?highlight=${item.document_id}`);
                       onClose();
                     }}
-                    className="p-3 rounded-2xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors apple-press flex items-start justify-between gap-3"
+                    className="w-full text-left p-3 rounded-2xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors apple-press flex items-start justify-between gap-3"
                   >
                     <div className="flex items-start gap-3">
                       <div className="p-2 rounded-xl bg-apple-blue/10 text-apple-blue mt-0.5">
@@ -128,10 +163,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                       </div>
                     </div>
                     <ArrowRight className="w-4 h-4 text-neutral-400 flex-shrink-0 mt-1" />
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
+          )}
+
+          {!loading && !searchError && query.trim() && searchResults.length === 0 && (
+            <p className="px-3 py-2 text-xs text-neutral-400">
+              No documents matched “{query.trim()}”.
+            </p>
           )}
 
           {/* Quick Navigation Links */}
@@ -141,13 +182,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
               {quickNav.map((item) => (
-                <div
+                <button
                   key={item.path}
+                  type="button"
                   onClick={() => {
                     navigate(item.path);
                     onClose();
                   }}
-                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors apple-press"
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors apple-press text-left"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 rounded-lg bg-black/5 dark:bg-white/10">{item.icon}</div>
@@ -156,7 +198,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                     </span>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
-                </div>
+                </button>
               ))}
             </div>
           </div>

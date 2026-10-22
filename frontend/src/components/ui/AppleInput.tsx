@@ -50,8 +50,8 @@ export const AppleInput = forwardRef<HTMLInputElement, AppleInputProps>(({
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
-            className="absolute right-3.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors focus:outline-none p-1 rounded-full apple-press"
-            tabIndex={-1}
+            aria-pressed={showPassword}
+            className="absolute right-3.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-apple-blue/40 p-1 rounded-full apple-press"
           >
             {showPassword ? (
               <EyeOff className="w-4 h-4" />

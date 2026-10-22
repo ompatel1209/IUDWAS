@@ -33,6 +33,7 @@
  */
 
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/database';
@@ -503,33 +504,67 @@ export class AuthController {
 
     const db = getDatabase();
     const user = db.prepare('SELECT user_id FROM users WHERE email = ?').get(email.toLowerCase()) as any;
+    let issuedResetToken: string | null = null;
 
     if (user) {
+      // Issue a single-use reset token valid for 15 minutes. Only the SHA-256
+      // hash is persisted — the raw token is returned for delivery to the user.
+      // SECURITY NOTE: this build ships no email/SMTP service, so the raw token
+      // is handed back in the API response (uniform shape, non-null only when
+      // the account exists). In production this MUST be delivered via email
+      // and the field removed from the response.
+      const rawToken = crypto.randomBytes(24).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const expiresAt = Date.now() + 15 * 60 * 1000;
+      db.prepare('UPDATE users SET reset_token_hash = ?, reset_token_expires = ? WHERE user_id = ?').run(tokenHash, expiresAt, user.user_id);
+      issuedResetToken = rawToken;
       recordAuditLog(user.user_id, 'PASSWORD_RESET_REQUESTED', 'USER', user.user_id, req.ip, req.headers['user-agent'] as string);
     }
 
-    // Always respond with success to prevent user enumeration
+    // Always respond with an identical shape to prevent user enumeration
     sendSuccess(res, {
       message: 'If an account exists with this email, password reset instructions have been generated.',
+      reset_token: issuedResetToken,
     });
   }
 
   static async resetPassword(req: Request, res: Response): Promise<void> {
-    const { email, new_password } = req.body;
-    if (!email || !new_password || new_password.length < 6) {
-      sendError(res, 'VALIDATION_ERROR', 'Email and valid new password (at least 6 chars) are required', 400);
+    const { email, new_password, reset_token } = req.body;
+    if (!email || !reset_token || !new_password || new_password.length < 6) {
+      sendError(res, 'VALIDATION_ERROR', 'Email, reset token and a valid new password (at least 6 chars) are required', 400);
       return;
     }
 
     const db = getDatabase();
-    const user = db.prepare('SELECT user_id FROM users WHERE email = ?').get(email.toLowerCase()) as any;
-    if (!user) {
-      sendError(res, 'USER_NOT_FOUND', 'No account found with this email address', 404);
+    const user = db.prepare('SELECT user_id, reset_token_hash, reset_token_expires FROM users WHERE email = ?').get(email.toLowerCase()) as any;
+    if (!user || !user.reset_token_hash) {
+      sendError(res, 'INVALID_RESET_TOKEN', 'Invalid or expired reset code', 400);
+      return;
+    }
+
+    const providedHash = crypto.createHash('sha256').update(reset_token).digest('hex');
+    let tokenValid = false;
+    try {
+      tokenValid = crypto.timingSafeEqual(Buffer.from(providedHash), Buffer.from(user.reset_token_hash as string));
+    } catch {
+      tokenValid = false;
+    }
+
+    const notExpired = typeof user.reset_token_expires === 'number' ? Date.now() <= user.reset_token_expires : false;
+
+    if (!tokenValid) {
+      sendError(res, 'INVALID_RESET_TOKEN', 'Invalid or expired reset code', 400);
+      return;
+    }
+
+    if (!notExpired) {
+      db.prepare('UPDATE users SET reset_token_hash = NULL, reset_token_expires = NULL WHERE user_id = ?').run(user.user_id);
+      sendError(res, 'INVALID_RESET_TOKEN', 'Invalid or expired reset code', 400);
       return;
     }
 
     const passwordHash = bcrypt.hashSync(new_password, 10);
-    db.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE user_id = ?").run(passwordHash, user.user_id);
+    db.prepare("UPDATE users SET password_hash = ?, reset_token_hash = NULL, reset_token_expires = NULL, updated_at = datetime('now') WHERE user_id = ?").run(passwordHash, user.user_id);
     db.prepare("UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ?").run(user.user_id);
 
     recordAuditLog(user.user_id, 'PASSWORD_RESET_COMPLETED', 'USER', user.user_id, req.ip, req.headers['user-agent'] as string);

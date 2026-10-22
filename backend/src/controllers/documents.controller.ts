@@ -636,7 +636,7 @@ export class DocumentsController {
   static async shareDocument(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { user_ids = [], department_id, message = '' } = req.body;
+      const { recipient_email, message = '' } = req.body;
       const user = req.user!;
       const db = getDatabase();
 
@@ -646,30 +646,36 @@ export class DocumentsController {
         return;
       }
 
-      // Send in-app notification to recipients
-      const notifyUsers = Array.isArray(user_ids) ? user_ids : [user_ids];
-      const insertNotif = db.prepare(`
-        INSERT INTO notifications (notification_id, user_id, type, title, message, is_read, related_resource_type, related_resource_id, created_at)
-        VALUES (?, ?, 'in_app', 'Document Shared with You', ?, 0, 'document', ?, datetime('now'))
-      `);
-
-      for (const targetUserId of notifyUsers) {
-        if (targetUserId) {
-          insertNotif.run(
-            uuidv4(),
-            targetUserId,
-            `${user.email} shared document "${doc.title}" with you.${message ? ` Note: ${message}` : ''}`,
-            id
-          );
-        }
+      // Resolve the recipient account by email (validated by shareDocumentSchema)
+      const targetUser = db
+        .prepare('SELECT user_id, full_name, email, is_active FROM users WHERE email = ?')
+        .get(String(recipient_email).toLowerCase()) as any;
+      if (!targetUser) {
+        sendError(res, 'USER_NOT_FOUND', 'No user found with this email address', 404);
+        return;
+      }
+      if (!targetUser.is_active) {
+        sendError(res, 'USER_INACTIVE', 'This user account is deactivated and cannot receive shares', 400);
+        return;
       }
 
+      // Send in-app notification to the recipient
+      db.prepare(`
+        INSERT INTO notifications (notification_id, user_id, type, title, message, is_read, related_resource_type, related_resource_id, created_at)
+        VALUES (?, ?, 'in_app', 'Document Shared with You', ?, 0, 'document', ?, datetime('now'))
+      `).run(
+        uuidv4(),
+        targetUser.user_id,
+        `${user.userId === targetUser.user_id ? 'You' : user.email} shared document "${doc.title}" with you.${message ? ` Note: ${message}` : ''}`,
+        id
+      );
+
       recordAuditLog(user.userId, 'DOCUMENT_SHARE', 'DOCUMENT', id, req.ip, req.headers['user-agent'] as string, {
-        recipients: notifyUsers,
-        department_id,
+        recipients: [targetUser.user_id],
+        recipient_email: targetUser.email,
       });
 
-      sendSuccess(res, { message: `Document shared with ${notifyUsers.length} user(s).` });
+      sendSuccess(res, { message: `Document shared with ${targetUser.full_name}.` });
     } catch (err: any) {
       sendError(res, 'SHARE_ERROR', err.message, 500);
     }

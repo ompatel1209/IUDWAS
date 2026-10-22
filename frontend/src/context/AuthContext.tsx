@@ -46,26 +46,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('iudwas_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('iudwas_user');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // A corrupt/legacy cache value must never crash the whole app.
+      return parsed && typeof parsed === 'object' ? (parsed as User) : null;
+    } catch {
+      localStorage.removeItem('iudwas_user');
+      return null;
+    }
   });
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('iudwas_token'));
   const [loading, setLoading] = useState<boolean>(true);
 
   const refreshProfile = async () => {
+    if (!localStorage.getItem('iudwas_token')) {
+      setLoading(false);
+      return;
+    }
     try {
-      if (localStorage.getItem('iudwas_token')) {
-        const res = await api.auth.me();
-        setUser(res.data.user);
-        localStorage.setItem('iudwas_user', JSON.stringify(res.data.user));
+      const res = await api.auth.me();
+      setUser(res.data.user);
+      localStorage.setItem('iudwas_user', JSON.stringify(res.data.user));
+    } catch (err: any) {
+      const isAuthFailure =
+        err?.name === 'ApiError' &&
+        (err?.code === 'SESSION_EXPIRED' || err?.statusCode === 401);
+      if (isAuthFailure) {
+        // The API client has already revoked the expired session below this
+        // point — mirror it locally so UI state matches storage.
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('iudwas_token');
+        localStorage.removeItem('iudwas_refresh_token');
+        localStorage.removeItem('iudwas_user');
       }
-    } catch {
-      // If profile fetch fails, user might be invalid
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('iudwas_token');
-      localStorage.removeItem('iudwas_refresh_token');
-      localStorage.removeItem('iudwas_user');
+      // Non-auth failures (network/server down) intentionally keep the cached
+      // session so a temporary backend restart does not dump the user out.
     } finally {
       setLoading(false);
     }

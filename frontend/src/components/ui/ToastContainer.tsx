@@ -8,7 +8,24 @@ export const ToastContainer: React.FC = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-[100] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-[92vw] sm:w-full pointer-events-none">
+    <div
+      className="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-[100] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-[92vw] sm:w-full pointer-events-none"
+      role="region"
+      aria-label="Notifications"
+    >
+      {/* Screen-reader announcer: errors assertive, everything else polite */}
+      <div aria-live="polite" aria-atomic="false" className="sr-only">
+        {toasts
+          .filter((t) => t.type !== 'error')
+          .map((t) => `${t.title}${t.message ? `. ${t.message}` : ''}`)
+          .join('. ')}
+      </div>
+      <div aria-live="assertive" aria-atomic="true" className="sr-only">
+        {toasts
+          .filter((t) => t.type === 'error')
+          .map((t) => `${t.title}${t.message ? `. ${t.message}` : ''}`)
+          .join('. ')}
+      </div>
       {toasts.map((toast) => {
         const icons = {
           success: <CheckCircle2 className="w-5 h-5 text-[#34C759] flex-shrink-0" />,

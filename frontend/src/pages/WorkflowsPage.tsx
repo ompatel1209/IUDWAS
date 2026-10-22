@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { api } from '../services/api';
+import { api, downloadWithAuth } from '../services/api';
 import { WorkflowTemplate, WorkflowInstance, DocumentItem, User } from '../types';
 import { AppleCard } from '../components/ui/AppleCard';
 import { AppleButton } from '../components/ui/AppleButton';
@@ -28,10 +28,11 @@ import {
   Share2,
   Eye,
   ArrowRight,
+  Download,
 } from 'lucide-react';
 
 export const WorkflowsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isFaculty, isDeptAdmin, isAdmin } = useAuth();
   const { showToast, celebrate } = useToast();
 
@@ -60,21 +61,70 @@ export const WorkflowsPage: React.FC = () => {
   const [detailInstance, setDetailInstance] = useState<WorkflowInstance | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // Authenticated document download from the detail modal
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+  const handleDetailDownload = async (documentId: string, filename: string) => {
+    if (downloadingDocId) return;
+    setDownloadingDocId(documentId);
+    try {
+      await downloadWithAuth(`/documents/${documentId}/download`, filename);
+      showToast('success', 'Download Started', filename);
+    } catch (err: any) {
+      showToast('error', 'Download Failed', err.message);
+    } finally {
+      setDownloadingDocId(null);
+    }
+  };
+
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
+
   const canApprove = isFaculty || isDeptAdmin || isAdmin;
+
+  // Deep-linked status filter (e.g. Dashboard "Approved Requests" → /workflows?status=APPROVED)
+  const visibleInstances = statusFilter
+    ? instances.filter((inst) => inst.status === statusFilter)
+    : instances;
+
+  // Honest progress: completed steps / total steps of the template.
+  // Terminal statuses render 100% with the status color.
+  const getWorkflowProgress = (inst: WorkflowInstance): number => {
+    if (inst.status === 'approved' || inst.status === 'rejected' || inst.status === 'cancelled') {
+      return 100;
+    }
+    const template = templates.find((t) => t.workflow_id === inst.workflow_id);
+    const totalSteps = template?.step_count ?? template?.steps?.length ?? 0;
+    const completedUpTo = (inst.current_step_order ?? 1) - 1; // steps approved before the one awaiting review
+    if (!totalSteps || totalSteps <= 0) {
+      return completedUpTo > 0 ? Math.min(90, completedUpTo * 20) : 5;
+    }
+    return Math.max(5, Math.min(95, Math.round((completedUpTo / totalSteps) * 100)));
+  };
 
   // Check URL parameters
   useEffect(() => {
     if (searchParams.get('action') === 'new') {
       setIsNewModalOpen(true);
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
     }
     const viewId = searchParams.get('view');
     if (viewId) {
-      api.workflowInstances.get(viewId).then((res) => {
-        setDetailInstance(res.data);
-        setIsDetailModalOpen(true);
-      }).catch(() => {});
+      api.workflowInstances
+        .get(viewId)
+        .then((res) => {
+          setDetailInstance(res.data);
+          setIsDetailModalOpen(true);
+        })
+        .catch((err: any) => {
+          // Surface why a deep-linked request could not be opened
+          showToast('error', 'Could not open request', err?.message || 'It may have been removed.');
+        })
+        .finally(() => {
+          searchParams.delete('view');
+          setSearchParams(searchParams, { replace: true });
+        });
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   const loadData = async () => {
     setLoading(true);
@@ -240,7 +290,7 @@ export const WorkflowsPage: React.FC = () => {
 
       {/* Tabs Switcher for Reviewers */}
       {canApprove && (
-        <div className="flex items-center justify-start">
+        <div className="flex items-center justify-start flex-wrap gap-3">
           <AppleSegmentedControl
             options={[
               { value: 'my_requests', label: 'My Submissions', count: instances.length },
@@ -249,6 +299,19 @@ export const WorkflowsPage: React.FC = () => {
             value={activeTab}
             onChange={(val) => setActiveTab(val as any)}
           />
+          {activeTab === 'my_requests' && (
+            <AppleSelect
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-44"
+              aria-label="Filter submissions by status"
+            >
+              <option value="">All Statuses</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </AppleSelect>
+          )}
         </div>
       )}
 
@@ -309,6 +372,16 @@ export const WorkflowsPage: React.FC = () => {
 
                     <div className="flex items-center gap-2">
                       <AppleButton
+                        variant="ghost"
+                        size="sm"
+                        icon={<UserCheck className="w-3.5 h-3.5" />}
+                        onClick={() => setActionModal({ type: 'delegate', instance: inst })}
+                        disabled={usersList.length === 0}
+                        title={usersList.length === 0 ? 'No colleagues available to delegate to' : 'Pass this request to another authorized approver'}
+                      >
+                        Delegate
+                      </AppleButton>
+                      <AppleButton
                         variant="destructive"
                         size="sm"
                         icon={<X className="w-3.5 h-3.5" />}
@@ -353,7 +426,7 @@ export const WorkflowsPage: React.FC = () => {
             </AppleCard>
           ) : (
             <div className="space-y-3">
-              {instances.map((inst) => (
+              {visibleInstances.map((inst) => (
                 <AppleCard
                   key={inst.instance_id}
                   hoverable
@@ -385,17 +458,23 @@ export const WorkflowsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Progress Line */}
+                  {/* Progress Line — real position in the approval chain */}
                   <div className="pt-1">
                     <div className="w-full h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                       <div
                         className={`h-full transition-all duration-500 ${
                           inst.status === 'approved'
-                            ? 'w-full bg-apple-green'
+                            ? 'bg-apple-green'
                             : inst.status === 'rejected'
-                            ? 'w-full bg-apple-red'
-                            : 'w-1/2 bg-apple-blue'
+                            ? 'bg-apple-red'
+                            : 'bg-apple-blue'
                         }`}
+                        style={{ width: `${getWorkflowProgress(inst)}%` }}
+                        role="progressbar"
+                        aria-label={`Workflow progress: step ${inst.current_step_order ?? 0}`}
+                        aria-valuenow={getWorkflowProgress(inst)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
                       />
                     </div>
                   </div>
@@ -538,15 +617,20 @@ export const WorkflowsPage: React.FC = () => {
                   <p className="text-xs text-neutral-500 mt-0.5">{detailInstance.file_name} · {(Number(detailInstance.file_size || 0) / 1024).toFixed(0)} KB</p>
                 </div>
               </div>
-              <a
-                href={`/api/v1/documents/${detailInstance.document_id}/download`}
-                target="_blank"
-                rel="noreferrer"
+              <AppleButton
+                variant="glass"
+                size="sm"
+                icon={<Download className="w-3.5 h-3.5" />}
+                loading={downloadingDocId === detailInstance.document_id}
+                onClick={() =>
+                  handleDetailDownload(
+                    detailInstance.document_id,
+                    detailInstance.file_name || detailInstance.document_title || 'document'
+                  )
+                }
               >
-                <AppleButton variant="glass" size="sm">
-                  View Document
-                </AppleButton>
-              </a>
+                View Document
+              </AppleButton>
             </div>
 
             {/* Step Action Audit Trail */}

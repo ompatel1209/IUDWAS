@@ -30,9 +30,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('iudwas_theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    try {
+      const saved = localStorage.getItem('iudwas_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
   });
 
   useEffect(() => {
@@ -46,6 +50,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     localStorage.setItem('iudwas_theme', theme);
   }, [theme]);
+
+  // Follow OS-level appearance changes while the app is open when the user has
+  // not explicitly chosen a theme override.
+  useEffect(() => {
+    if (localStorage.getItem('iudwas_theme') === 'dark' || localStorage.getItem('iudwas_theme') === 'light') {
+      return;
+    }
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = (e: MediaQueryListEvent) => setThemeState(e.matches ? 'dark' : 'light');
+    mq.addEventListener?.('change', listener);
+    return () => mq.removeEventListener?.('change', listener);
+  }, []);
 
   const toggleTheme = () => {
     setThemeState(prev => (prev === 'light' ? 'dark' : 'light'));

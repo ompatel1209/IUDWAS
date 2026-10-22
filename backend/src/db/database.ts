@@ -67,6 +67,17 @@ export function getDatabase(): Database.Database {
         logger.debug('Avatar column migration skipped/completed.');
       }
 
+      // Auto-migrate password reset token columns if DB already existed
+      try {
+        const userCols = dbInstance.pragma('table_info(users)') as any[];
+        if (!userCols.some((col: any) => col.name === 'reset_token_hash')) {
+          dbInstance.exec('ALTER TABLE users ADD COLUMN reset_token_hash TEXT;');
+          dbInstance.exec('ALTER TABLE users ADD COLUMN reset_token_expires INTEGER;');
+        }
+      } catch (migrationErr) {
+        logger.debug('Reset token columns migration skipped/completed.');
+      }
+
       // Auto-migrate notifications sender & signature columns if DB already existed
       try {
         const notifCols = dbInstance.pragma('table_info(notifications)') as any[];

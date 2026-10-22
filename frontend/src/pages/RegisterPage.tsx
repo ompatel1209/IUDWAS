@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
@@ -20,9 +20,14 @@ export const RegisterPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  // Authenticated users don't need the registration page
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   useEffect(() => {
     api.departments.list().then((res) => setDepartments(res.data)).catch(() => {});
@@ -32,6 +37,14 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     if (!fullName || !email || !password) {
       showToast('warning', 'Missing Fields', 'Please complete all required fields');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('warning', 'Weak Password', 'Password must be at least 6 characters');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('warning', 'Invalid Email', 'Enter a valid email address');
       return;
     }
 

@@ -41,6 +41,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
     return () => clearInterval(interval);
   }, [user]);
 
+  // Close the profile dropdown with Escape
+  useEffect(() => {
+    if (!showProfileMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowProfileMenu(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showProfileMenu]);
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -62,14 +72,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
             <button
               onClick={onToggleSidebar}
               className="md:hidden p-2 rounded-xl text-neutral-600 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10"
+              aria-label="Open navigation menu"
+              aria-controls="app-sidebar"
             >
               <Layers className="w-5 h-5" />
             </button>
           )}
 
-          <div
+          <button
+            type="button"
             onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2.5 cursor-pointer apple-press select-none"
+            aria-label="IUDWAS home — go to dashboard"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-apple-blue to-apple-purple flex items-center justify-center text-white font-black text-base shadow-sm">
               IU
@@ -85,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
                 Intelligent University Platform
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Middle: Spotlight Search Launcher */}
@@ -108,6 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
           <button
             onClick={onOpenCommand}
             className="md:hidden p-2 rounded-xl text-neutral-600 dark:text-neutral-300 hover:bg-black/5 dark:hover:bg-white/10"
+            aria-label="Open Spotlight search"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -139,6 +154,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
+              aria-haspopup="menu"
+              aria-expanded={showProfileMenu}
+              aria-label="Open account menu"
               className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 apple-press transition-colors"
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-apple-blue/10 dark:bg-apple-blue/20 text-apple-blue flex items-center justify-center font-bold text-xs border border-apple-blue/20">
@@ -248,6 +266,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCommand, onToggleSidebar }
         </div>
       </header>
 
+      {/* Profile modal lives outside the z-30 header stacking context so its
+          z-50 overlay is never trapped beneath the command palette (M16). */}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}

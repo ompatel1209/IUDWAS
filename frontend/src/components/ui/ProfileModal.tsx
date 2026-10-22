@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
@@ -23,8 +23,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   // Photo State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [confirmRemovePhoto, setConfirmRemovePhoto] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke the previous object URL whenever the preview changes (M20 leak fix)
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   // Profile Info State
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -74,7 +82,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   };
 
   const handleDeletePhoto = async () => {
-    if (!window.confirm('Are you sure you want to remove your profile photo?')) return;
+    // First tap arms the destructive action; a second tap confirms it.
+    // (Replaces the blocking, unstyled window.confirm.)
+    if (!confirmRemovePhoto) {
+      setConfirmRemovePhoto(true);
+      return;
+    }
 
     setPhotoUploading(true);
     try {
@@ -82,6 +95,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       updateCurrentUser(res.data.user);
       setSelectedFile(null);
       setPreviewUrl(null);
+      setConfirmRemovePhoto(false);
       showToast('info', 'Photo Removed', 'Your avatar has been reset to default.');
     } catch (err: any) {
       showToast('error', 'Removal Failed', err.message);
@@ -268,15 +282,27 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </AppleButton>
 
                   {user?.avatar_url && (
-                    <AppleButton
-                      variant="destructive"
-                      size="sm"
-                      icon={<Trash2 className="w-4 h-4" />}
-                      onClick={handleDeletePhoto}
-                      loading={photoUploading}
-                    >
-                      Remove Photo
-                    </AppleButton>
+                    <>
+                      {confirmRemovePhoto && (
+                        <AppleButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmRemovePhoto(false)}
+                          disabled={photoUploading}
+                        >
+                          Keep Photo
+                        </AppleButton>
+                      )}
+                      <AppleButton
+                        variant="destructive"
+                        size="sm"
+                        icon={<Trash2 className="w-4 h-4" />}
+                        onClick={handleDeletePhoto}
+                        loading={photoUploading}
+                      >
+                        {confirmRemovePhoto ? 'Confirm Removal' : 'Remove Photo'}
+                      </AppleButton>
+                    </>
                   )}
                 </>
               )}

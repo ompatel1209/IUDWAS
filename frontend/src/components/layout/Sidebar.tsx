@@ -118,19 +118,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden md:block w-64 glass-nav border-r border-black/5 dark:border-white/10 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
+      <aside id="app-sidebar" className="hidden md:block w-64 glass-nav border-r border-black/5 dark:border-white/10 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto">
         {content}
       </aside>
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-40 md:hidden flex">
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-md transition-opacity" onClick={onClose} />
-          <aside className="relative w-64 max-w-[80vw] h-full glass-panel dark:bg-[#1C1C1E] z-50 overflow-y-auto shadow-apple-modal animate-apple-modal">
-            {content}
-          </aside>
-        </div>
+        <MobileDrawer onClose={onClose} content={content} />
       )}
     </>
+  );
+};
+
+const MobileDrawer: React.FC<{ onClose?: () => void; content: React.ReactNode }> = ({ onClose, content }) => {
+  // Escape to close, body scroll lock, and dialog semantics for the drawer
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-40 md:hidden flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-md transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className="relative w-64 max-w-[80vw] h-full glass-panel dark:bg-[#1C1C1E] z-50 overflow-y-auto shadow-apple-modal animate-apple-modal outline-none">
+        {content}
+      </aside>
+    </div>
   );
 };
